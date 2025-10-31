@@ -3,102 +3,135 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Bike Ride Green – Personal Cycling Coach</title>
+  <title>Bike Ride Green – Track. Improve. Enjoy.</title>
 
-  <!-- Meta for SEO & App Store Preview -->
-  <meta name="description" content="Bike Ride Green – Track. Improve. Enjoy. Your personal cycling coach for accurate tracking, adaptive benchmarks, and complete privacy." />
-  <meta property="og:title" content="Bike Ride Green – Personal Cycling Coach" />
-  <meta property="og:description" content="Ride smarter with real-time tracking, adaptive benchmarks, and full privacy. Try 1 month free!" />
+  <!-- SEO & Social -->
+  <meta name="description" content="Bike Ride Green – Track. Improve. Enjoy. A simple, accurate cycling app with adaptive benchmarks, live intensity, and full privacy. Try 1 month free." />
+  <meta property="og:title" content="Bike Ride Green – Track. Improve. Enjoy." />
+  <meta property="og:description" content="Ride smarter with real-time tracking, adaptive benchmarks, and full privacy. Try 1 month free." />
   <meta property="og:type" content="website" />
   <meta property="og:image" content="https://bikeridegreen.github.io/assets/preview.jpg" />
-  <meta name="apple-itunes-app" content="app-id=YOUR_APP_ID_HERE" />
+  <meta property="og:url" content="https://bikeridegreen.github.io/" />
+  <meta name="twitter:card" content="summary_large_image" />
 
+  <!-- App Store Smart Banner (fills once live) -->
+  <meta name="apple-itunes-app" content="app-id=6753626587" />
+
+  <!-- Light/Dark theme -->
   <style>
+    :root {
+      --accent: #0e8a26;
+      --accent-dark: #0b6a1e;
+      --text: #222;
+      --bg: #fff;
+      --subtext: #666;
+      --card: #f4f4f4;
+      --button-text: #fff;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --accent: #4fd267;
+        --accent-dark: #38a34f;
+        --text: #f1f1f1;
+        --bg: #111;
+        --subtext: #aaa;
+        --card: #1b1b1b;
+        --button-text: #0b2a12;
+      }
+    }
+    * { box-sizing: border-box; }
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-      margin: 0;
-      padding: 0;
-      color: #222;
+      margin: 0; padding: 0;
+      color: var(--text); background: var(--bg);
       line-height: 1.6;
-      background-color: #fff;
+      -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale;
     }
     header {
-      background: #0e8a26;
-      color: white;
-      text-align: center;
+      background: var(--accent); color: white; text-align: center;
       padding: 40px 20px;
     }
+    header h1 { margin: 0 0 8px; font-size: 32px; }
+    header p { margin: 0; opacity: 0.95; }
     section {
-      max-width: 800px;
-      margin: 40px auto;
-      padding: 0 20px;
+      max-width: 900px; margin: 40px auto; padding: 0 20px;
     }
-    h1, h2 {
-      text-align: center;
+    h2 { text-align: center; margin-top: 0; }
+    .lead { font-size: 1.05rem; text-align: center; margin: 0 auto 24px; max-width: 780px; }
+    .card {
+      background: var(--card); border-radius: 12px; padding: 20px;
     }
-    ul {
-      list-style-type: none;
-      padding: 0;
+    ul { list-style: none; padding: 0; margin: 0; }
+    li { margin: 10px 0; padding-left: 28px; position: relative; }
+    li::before { content: "🚴‍♂️"; position: absolute; left: 0; top: 0; }
+    .cta-wrap { display: flex; justify-content: center; margin-top: 22px; }
+    .cta {
+      display: inline-block; padding: 12px 20px; border-radius: 10px;
+      background: var(--accent); color: var(--button-text); font-weight: 600;
+      text-decoration: none; transition: transform 0.15s ease, background 0.2s ease;
     }
-    li::before {
-      content: "🚴‍♂️ ";
-    }
+    .cta:hover { background: var(--accent-dark); transform: translateY(-1px); }
+    .muted { color: var(--subtext); }
     footer {
-      text-align: center;
-      font-size: 0.9em;
-      color: #666;
-      margin: 40px 0;
+      text-align: center; font-size: 0.9em; color: var(--subtext);
+      margin: 40px 0 60px;
     }
-    a {
-      color: #0e8a26;
-      text-decoration: none;
-    }
-    a:hover {
-      text-decoration: underline;
+    /* small screens */
+    @media (max-width: 480px) {
+      header h1 { font-size: 26px; }
     }
   </style>
 </head>
 <body>
 
   <header>
-    <h1>Bike Ride Green</h1>
-    <p>Personal Cycling Coach for Smarter, Healthier Rides</p>
+    <h1>Bike Ride Green – Track. Improve. Enjoy.</h1>
+    <p>Simple, accurate cycling — with adaptive benchmarks and complete privacy.</p>
   </header>
 
+  <!-- Hero/Intro -->
   <section>
-    <h2>Train Smarter, Ride Greener</h2>
-    <p><strong>Bike Ride Green</strong> helps you ride with precision and motivation. Track speed, elevation, calories, and effort — 
-    all optimized for your personal cycling style. Build your fitness benchmark and see your weekly, monthly, and yearly progress.</p>
+    <p class="lead"><strong>Bike Ride Green</strong> helps you ride with precision and motivation. Track speed, elevation, calories, and effort — all tuned to your personal cycling style. Build your fitness benchmark and see your progress weekly, monthly, and yearly.</p>
+  </section>
 
+  <!-- Key Features -->
+  <section class="card">
     <h2>Key Features</h2>
     <ul>
-      <li>Accurate GPS tracking with elevation profiles</li>
-      <li>Live speed and intensity feedback</li>
-      <li>Weekly, monthly, and yearly statistics</li>
-      <li>Personal performance benchmark tracking</li>
-      <li>Offline data storage – your rides stay private on your device</li>
+      <li><strong>Real-Time Ride Tracking</strong> — Speed, distance, time, and elevation gain in one clean dashboard. Reset max speed whenever you want.</li>
+      <li><strong>Calories &amp; Live Intensity</strong> — See how hard you’re working with adaptive intensity and calorie estimates that reflect your stats.</li>
+      <li><strong>Personal Benchmarking</strong> — Adaptive metrics that learn from your rides to show real improvement (not generic averages). Optional voice updates keep you focused.</li>
+      <li><strong>Smart Auto-Pause &amp; Resume</strong> — Stops when you rest, resumes the moment you start pedaling — no taps needed.</li>
+      <li><strong>Automatic Screen Management</strong> — Screen stays awake while riding and locks safely in the background to conserve battery.</li>
+      <li><strong>Beautiful Ride Maps &amp; Elevation</strong> — Full Apple Maps routes with start/finish and per-km/mi segments to visualize effort and terrain.</li>
+      <li><strong>Detailed Ride History</strong> — Clear weekly, monthly, and yearly statistics for distance, speed, and calories.</li>
+      <li><strong>Custom Profile Settings</strong> — Weight, bike weight, terrain type, and metric/imperial units for accurate stats.</li>
+      <li><strong>Privacy First</strong> — Your rides stay on your device. Export to CSV or GPX any time for your own analysis and maps.</li>
     </ul>
   </section>
 
+  <!-- Subscription -->
   <section>
     <h2>Pro Monthly Subscription</h2>
-    <p>
-      Unlock <strong>unlimited rides</strong> with <strong>detailed analytics</strong> and the chance to build your long-term personal benchmark. 
-      Ride smarter, get stronger, and stay motivated with clear progress tracking and real-time insights into your performance.
+    <p class="lead">
+      Unlock <strong>unlimited rides</strong> with <strong>detailed analytics</strong> and a long-term, adaptive personal benchmark. Stay motivated with clear progress tracking and real-time insights into your performance.
     </p>
-    <p>
-      Includes a <strong>1-month free trial — or 20 rides, whichever comes first</strong>.
+    <p class="lead muted">
+      Includes a <strong>1-month free trial — or 20 rides, whichever comes first</strong>. Renews at <strong>$2.99 CAD / month</strong>. Cancel anytime.
     </p>
+    <div class="cta-wrap">
+      <a class="cta" href="https://apps.apple.com/us/app/bike-ride-green/id6753626587" target="_blank" rel="noopener">Get Bike Ride Green on the App Store</a>
+    </div>
   </section>
 
-  <section>
+  <!-- Global languages -->
+  <section class="card">
     <h2>Global Language Support</h2>
-    <p>
+    <p class="lead">
       <strong>Includes full English plus 12-language localization.</strong><br />
       Enhanced voice guidance for <em>start</em>, <em>pause</em>, <em>end</em>, and <em>milestones</em> — across all supported languages.
     </p>
-
-    <ul style="list-style: none; padding-left: 0; line-height: 1.8;">
+    <ul>
       <li>🇬🇧 <strong>English</strong> – Enjoy your ride!</li>
       <li>🇫🇷 <strong>Français</strong> – Bonne balade !</li>
       <li>🇩🇪 <strong>Deutsch</strong> – Gute Fahrt!</li>
@@ -115,17 +148,17 @@
     </ul>
   </section>
 
+  <!-- Support & Privacy -->
   <section>
-    <h2>Support & Privacy</h2>
-    <p>
-      📄 <a href="https://bikeridegreen.github.io/bikeridegreen-privacy/BikeRideGreen_PrivacySafety.html">Privacy Policy</a><br />
-      💬 <a href="https://bikeridegreen.github.io/bikeridegreen-support/">Support Page</a>
+    <h2>Support &amp; Privacy</h2>
+    <p class="lead">
+      📄 <a href="https://bikeridegreen.github.io/bikeridegreen-privacy/BikeRideGreen_PrivacySafety.html" target="_blank" rel="noopener">Privacy Policy</a><br />
+      💬 <a href="https://bikeridegreen.github.io/bikeridegreen-support/" target="_blank" rel="noopener">Support Page</a>
     </p>
   </section>
 
   <footer>
-    <p>© 2025 Bike Ride Green. All rights reserved.<br />
-    Made with ❤️ for cyclists worldwide.</p>
+    <p>© 2025 Bike Ride Green. All rights reserved.<br />Made with ❤️ for cyclists worldwide.</p>
   </footer>
 
 </body>
