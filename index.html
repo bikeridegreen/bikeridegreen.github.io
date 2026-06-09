@@ -3,10 +3,13 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
   <title>Bike Ride Green Portal</title>
   <meta name="description" content="Bike Ride Green private portal for uploaded ride summaries, groups, family, training partners, and cycling clubs." />
+
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -31,41 +34,43 @@
       --blue:         #38bdf8;
     }
 
-    *, *::before, *::after { box-sizing: border-box; }
+    *, *::before, *::after {
+      box-sizing: border-box;
+    }
 
     body {
-  margin: 0;
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-  background:
-    radial-gradient(circle at top left, rgba(74,222,128,0.18), transparent 34%),
-    radial-gradient(circle at bottom right, rgba(34,197,94,0.16), transparent 42%),
-    linear-gradient(180deg, #0a2414 0%, #10351f 48%, #092817 100%);
-  color: var(--text);
-  min-height: 100vh;
-  -webkit-font-smoothing: antialiased;
-}
+      margin: 0;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background:
+        radial-gradient(circle at top left, rgba(74,222,128,0.18), transparent 34%),
+        radial-gradient(circle at bottom right, rgba(34,197,94,0.16), transparent 42%),
+        linear-gradient(180deg, #0a2414 0%, #10351f 48%, #092817 100%);
+      color: var(--text);
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+    }
 
     body::before {
-  content: '';
-  position: fixed;
-  inset: 0;
-  background:
-    radial-gradient(ellipse 70% 45% at 15% -10%, rgba(74,222,128,0.20) 0%, transparent 65%),
-    radial-gradient(ellipse 55% 35% at 85% 105%, rgba(22,163,74,0.18) 0%, transparent 62%),
-    linear-gradient(135deg, rgba(34,197,94,0.05), transparent 45%);
-  pointer-events: none;
-  z-index: 0;
-}
+      content: '';
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 70% 45% at 15% -10%, rgba(74,222,128,0.20) 0%, transparent 65%),
+        radial-gradient(ellipse 55% 35% at 85% 105%, rgba(22,163,74,0.18) 0%, transparent 62%),
+        linear-gradient(135deg, rgba(34,197,94,0.05), transparent 45%);
+      pointer-events: none;
+      z-index: 0;
+    }
 
     header {
-  position: sticky;
-  top: 0;
-  z-index: 100;
-  border-bottom: 1px solid rgba(34,197,94,0.20);
-  background: rgba(8,31,17,0.84);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-}
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      border-bottom: 1px solid rgba(34,197,94,0.20);
+      background: rgba(8,31,17,0.84);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+    }
 
     .header-inner {
       max-width: 1120px;
@@ -137,19 +142,6 @@
       white-space: nowrap;
     }
 
-    .email-pill {
-      font-size: 13px;
-      color: var(--muted-2);
-      background: rgba(255,255,255,0.05);
-      border: 1px solid var(--border-soft);
-      border-radius: 999px;
-      padding: 7px 14px;
-      max-width: 220px;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-
     main {
       max-width: 1120px;
       margin: 0 auto;
@@ -158,7 +150,9 @@
       z-index: 1;
     }
 
-    .hidden { display: none !important; }
+    .hidden {
+      display: none !important;
+    }
 
     button {
       border: 0;
@@ -173,9 +167,19 @@
       white-space: nowrap;
     }
 
-    button:hover { transform: translateY(-1px); }
-    button:active { transform: translateY(0); }
-    button:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
+    button:hover {
+      transform: translateY(-1px);
+    }
+
+    button:active {
+      transform: translateY(0);
+    }
+
+    button:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+      transform: none;
+    }
 
     .btn-primary {
       background: var(--green-dim);
@@ -208,14 +212,14 @@
       background: rgba(239,68,68,0.18);
     }
 
-  .card {
-  background:
-    linear-gradient(180deg, rgba(17,41,24,0.96), rgba(12,32,18,0.96));
-  border: 1px solid rgba(34,197,94,0.22);
-  border-radius: 20px;
-  padding: 28px;
-  box-shadow: 0 18px 60px rgba(0,0,0,0.22);
-}
+    .card {
+      background:
+        linear-gradient(180deg, rgba(17,41,24,0.96), rgba(12,32,18,0.96));
+      border: 1px solid rgba(34,197,94,0.22);
+      border-radius: 20px;
+      padding: 28px;
+      box-shadow: 0 18px 60px rgba(0,0,0,0.22);
+    }
 
     .settings-panel {
       margin-bottom: 20px;
@@ -252,15 +256,15 @@
     }
 
     .login-card {
-  width: 100%;
-  max-width: 440px;
-  background:
-    linear-gradient(180deg, rgba(17,41,24,0.96), rgba(12,32,18,0.96));
-  border: 1px solid rgba(34,197,94,0.22);
-  border-radius: 24px;
-  padding: 40px;
-  box-shadow: 0 18px 60px rgba(0,0,0,0.22);
-}
+      width: 100%;
+      max-width: 440px;
+      background:
+        linear-gradient(180deg, rgba(17,41,24,0.96), rgba(12,32,18,0.96));
+      border: 1px solid rgba(34,197,94,0.22);
+      border-radius: 24px;
+      padding: 40px;
+      box-shadow: 0 18px 60px rgba(0,0,0,0.22);
+    }
 
     .login-eyebrow {
       display: inline-flex;
@@ -298,7 +302,9 @@
       margin: 0 0 28px;
     }
 
-    .field { margin-bottom: 16px; }
+    .field {
+      margin-bottom: 16px;
+    }
 
     label {
       display: block;
@@ -323,14 +329,18 @@
       transition: border-color 0.15s, box-shadow 0.15s;
     }
 
-    input::placeholder { color: var(--muted); }
+    input::placeholder {
+      color: var(--muted);
+    }
 
     input:focus, select:focus {
       border-color: rgba(34,197,94,0.5);
       box-shadow: 0 0 0 3px rgba(34,197,94,0.1);
     }
 
-    select option { background: #1a2e1e; }
+    select option {
+      background: #1a2e1e;
+    }
 
     .button-row {
       display: flex;
@@ -402,7 +412,9 @@
       line-height: 1.1;
     }
 
-    .stat-value.accent { color: var(--green-light); }
+    .stat-value.accent {
+      color: var(--green-light);
+    }
 
     .controls {
       display: grid;
@@ -516,7 +528,9 @@
       color: var(--text);
     }
 
-    .metric-value.green { color: var(--green-light); }
+    .metric-value.green {
+      color: var(--green-light);
+    }
 
     .section-divider {
       border: 0;
@@ -534,47 +548,143 @@
       font-size: 15px;
     }
 
-   .footer-note {
-  margin-top: 32px;
-  color: var(--muted);
-  font-size: 13px;
-  line-height: 1.6;
-  padding-top: 20px;
-  border-top: 1px solid var(--border-soft);
-}
+    .groups-list {
+      display: grid;
+      gap: 12px;
+      margin: 16px 0 24px;
+    }
 
-.footer-note a {
-  color: var(--green-light);
-  font-weight: 700;
-  text-decoration: none;
-}
+    .group-card {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid var(--border-soft);
+      border-radius: 16px;
+      padding: 18px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
 
-.footer-note a:hover {
-  text-decoration: underline;
-}
+    .group-card:hover {
+      background: rgba(34,197,94,0.05);
+      border-color: rgba(34,197,94,0.2);
+    }
+
+    .group-title {
+      font-size: 16px;
+      font-weight: 800;
+      margin-bottom: 4px;
+    }
+
+    .group-meta {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .group-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .footer-note {
+      margin-top: 32px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.6;
+      padding-top: 20px;
+      border-top: 1px solid var(--border-soft);
+    }
+
+    .footer-note a {
+      color: var(--green-light);
+      font-weight: 700;
+      text-decoration: none;
+    }
+
+    .footer-note a:hover {
+      text-decoration: underline;
+    }
+
     @media (max-width: 900px) {
-      .stat-grid { grid-template-columns: repeat(3, 1fr); }
-      .controls { grid-template-columns: 1fr; }
-      .ride-card { grid-template-columns: 1fr 1fr; }
-      .header-inner { flex-wrap: wrap; height: auto; padding: 14px 20px; }
-      .top-actions { width: 100%; }
+      .stat-grid {
+        grid-template-columns: repeat(3, 1fr);
+      }
+
+      .controls {
+        grid-template-columns: 1fr;
+      }
+
+      .ride-card {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .header-inner {
+        flex-wrap: wrap;
+        height: auto;
+        padding: 14px 20px;
+      }
+
+      .top-actions {
+        width: 100%;
+      }
+
+      .group-card {
+        align-items: flex-start;
+        flex-direction: column;
+      }
     }
 
     @media (max-width: 700px) {
-      .chart-header { flex-direction: column; }
-      .chart-control { width: 100%; }
-      .chart-wrap { height: 260px; }
-      .stat-grid { grid-template-columns: repeat(2, 1fr); }
+      .chart-header {
+        flex-direction: column;
+      }
+
+      .chart-control {
+        width: 100%;
+      }
+
+      .chart-wrap {
+        height: 260px;
+      }
+
+      .stat-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
     }
 
     @media (max-width: 520px) {
-      main { padding: 20px 16px 60px; }
-      .card { padding: 20px; border-radius: 18px; }
-      .login-card { padding: 28px 22px; }
-      .stat-grid { grid-template-columns: 1fr; }
-      .ride-card { grid-template-columns: 1fr; }
-      .button-row button, .top-actions button { width: 100%; }
-      .email-pill, .user-pill { max-width: 100%; }
+      main {
+        padding: 20px 16px 60px;
+      }
+
+      .card {
+        padding: 20px;
+        border-radius: 18px;
+      }
+
+      .login-card {
+        padding: 28px 22px;
+      }
+
+      .stat-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .ride-card {
+        grid-template-columns: 1fr;
+      }
+
+      .button-row button,
+      .top-actions button,
+      .group-actions button {
+        width: 100%;
+      }
+
+      .user-pill {
+        max-width: 100%;
+      }
     }
   </style>
 </head>
@@ -586,6 +696,7 @@
         <div class="logo">
           <img src="assets/icon.png" alt="Bike Ride Green icon">
         </div>
+
         <div class="brand-text">
           <h1>Bike Ride Green</h1>
           <div class="subtitle">Private ride portal</div>
@@ -595,7 +706,7 @@
       <div id="signedInActions" class="top-actions hidden">
         <div id="userDisplayName" class="user-pill"></div>
         <button class="btn-ghost" onclick="toggleSettings()">Settings</button>
-        <button class="btn-ghost" onclick="loadRides()">Refresh</button>
+        <button class="btn-ghost" onclick="refreshDashboard()">Refresh</button>
         <button class="btn-danger-soft" onclick="signOut()">Sign out</button>
       </div>
     </div>
@@ -645,6 +756,36 @@
           </div>
 
           <div id="settingsStatus" class="status"></div>
+
+          <hr class="section-divider" />
+
+          <h3>Create private group</h3>
+          <p>Create a club, riding party, or family group. You will be the owner and can invite other Bike Ride Green users.</p>
+
+          <div class="field">
+            <label for="groupNameInput">Group name</label>
+            <input id="groupNameInput" type="text" maxlength="60" placeholder="Example: Calgary Weekend Riders" />
+          </div>
+
+          <div class="field">
+            <label for="groupTypeInput">Group type</label>
+            <select id="groupTypeInput">
+              <option value="club">Club</option>
+              <option value="riding_party">Riding party</option>
+              <option value="family">Family</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="groupDescriptionInput">Description</label>
+            <input id="groupDescriptionInput" type="text" maxlength="160" placeholder="Optional short description" />
+          </div>
+
+          <div class="settings-actions">
+            <button class="btn-primary" onclick="createRideGroup()">Create group</button>
+          </div>
+
+          <div id="groupStatus" class="status"></div>
         </div>
 
         <div class="dash-header">
@@ -657,26 +798,42 @@
             <div class="stat-label">Rides</div>
             <div id="statRides" class="stat-value accent">0</div>
           </div>
+
           <div class="stat">
             <div class="stat-label">Distance</div>
             <div id="statDistance" class="stat-value">0</div>
           </div>
+
           <div class="stat">
             <div class="stat-label">Calories</div>
             <div id="statCalories" class="stat-value">0</div>
           </div>
+
           <div class="stat">
             <div class="stat-label">Elevation</div>
             <div id="statElevation" class="stat-value">0</div>
           </div>
+
           <div class="stat">
             <div class="stat-label">Duration</div>
             <div id="statDuration" class="stat-value">0</div>
           </div>
+
           <div class="stat">
             <div class="stat-label">Best benchmark</div>
             <div id="statBenchmark" class="stat-value accent">0%</div>
           </div>
+        </div>
+
+        <div id="groupsSection" class="hidden">
+          <hr class="section-divider" />
+
+          <div class="dash-header">
+            <h2>My groups</h2>
+            <p class="dash-helper">Manage your clubs, riding parties, and family groups.</p>
+          </div>
+
+          <div id="myGroupsList" class="groups-list"></div>
         </div>
 
         <hr class="section-divider" />
@@ -714,6 +871,7 @@
               <div class="chart-title">Performance chart</div>
               <div id="chartSubtitle" class="chart-subtitle">Follows the year and month filters above.</div>
             </div>
+
             <select id="chartMetric" class="chart-control" onchange="renderRides()">
               <option value="distance">Distance</option>
               <option value="duration">Time</option>
@@ -723,6 +881,7 @@
               <option value="calories">Calories</option>
             </select>
           </div>
+
           <div class="chart-wrap">
             <canvas id="rideChart"></canvas>
           </div>
@@ -730,13 +889,13 @@
 
         <div id="ridesList" class="rides-list"></div>
 
-   <p class="footer-note">
-  Bike Ride Green respects your privacy. Uploaded ride summaries are shown only in your private account.
-  View the
-  <a href="https://bike.thegreenportfolio.ca/privacy.html" target="_blank" rel="noopener noreferrer">
-    Privacy & Safety Policy
-  </a>.
-</p>
+        <p class="footer-note">
+          Bike Ride Green respects your privacy. Uploaded ride summaries are shown only in your private account.
+          View the
+          <a href="https://bike.thegreenportfolio.ca/privacy.html" target="_blank" rel="noopener noreferrer">
+            Privacy & Safety Policy
+          </a>.
+        </p>
       </div>
     </section>
   </main>
@@ -748,6 +907,7 @@
     const client = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
     let allRides = [];
+    let allGroups = [];
     let currentUser = null;
     let currentProfile = null;
     let rideChart = null;
@@ -774,7 +934,7 @@
       if (session && session.user) {
         currentUser = session.user;
         await showDashboard(session.user);
-        await loadRides();
+        await refreshDashboard();
       } else {
         showLogin();
       }
@@ -792,7 +952,10 @@
       setLoginLoading(true);
       showLoginStatus("");
 
-      const { data, error } = await client.auth.signInWithPassword({ email, password });
+      const { data, error } = await client.auth.signInWithPassword({
+        email,
+        password
+      });
 
       setLoginLoading(false);
 
@@ -803,7 +966,7 @@
 
       currentUser = data.user;
       await showDashboard(data.user);
-      await loadRides();
+      await refreshDashboard();
     }
 
     async function signOut() {
@@ -812,6 +975,7 @@
       currentUser = null;
       currentProfile = null;
       allRides = [];
+      allGroups = [];
 
       if (rideChart) {
         rideChart.destroy();
@@ -819,6 +983,13 @@
       }
 
       showLogin();
+    }
+
+    async function refreshDashboard() {
+      if (!currentUser) return;
+
+      await loadRides();
+      await loadGroups();
     }
 
     async function loadProfile(user) {
@@ -845,6 +1016,13 @@
     function toggleSettings() {
       settingsStatus.textContent = "";
       settingsStatus.classList.remove("success");
+
+      const groupStatus = document.getElementById("groupStatus");
+      if (groupStatus) {
+        groupStatus.textContent = "";
+        groupStatus.classList.remove("success");
+      }
+
       settingsPanel.classList.toggle("hidden");
     }
 
@@ -884,6 +1062,181 @@
       userDisplayName.textContent = data.display_name || currentUser.email || "Signed in";
       settingsStatus.classList.add("success");
       settingsStatus.textContent = "Display name saved.";
+    }
+
+    async function createRideGroup() {
+      if (!currentUser) return;
+
+      const groupStatus = document.getElementById("groupStatus");
+      const nameInput = document.getElementById("groupNameInput");
+      const typeInput = document.getElementById("groupTypeInput");
+      const descriptionInput = document.getElementById("groupDescriptionInput");
+
+      const name = nameInput.value.trim();
+      const groupType = typeInput.value;
+      const description = descriptionInput.value.trim();
+
+      if (!name) {
+        groupStatus.classList.remove("success");
+        groupStatus.textContent = "Please enter a group name.";
+        return;
+      }
+
+      groupStatus.classList.remove("success");
+      groupStatus.textContent = "Creating group...";
+
+      const { data: group, error: groupError } = await client
+        .from("ride_groups")
+        .insert({
+          owner_id: currentUser.id,
+          name,
+          group_type: groupType,
+          description
+        })
+        .select("*")
+        .single();
+
+      if (groupError) {
+        groupStatus.classList.remove("success");
+        groupStatus.textContent = groupError.message;
+        return;
+      }
+
+      const { error: memberError } = await client
+        .from("ride_group_members")
+        .insert({
+          group_id: group.id,
+          user_id: currentUser.id,
+          role: "owner"
+        });
+
+      if (memberError) {
+        groupStatus.classList.remove("success");
+        groupStatus.textContent = memberError.message;
+        return;
+      }
+
+      nameInput.value = "";
+      descriptionInput.value = "";
+
+      groupStatus.classList.add("success");
+      groupStatus.textContent = "Group created.";
+
+      await loadGroups();
+    }
+
+    function generateInviteCode() {
+      const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+      let code = "";
+
+      for (let i = 0; i < 8; i++) {
+        code += alphabet[Math.floor(Math.random() * alphabet.length)];
+      }
+
+      return code;
+    }
+
+    async function createGroupInvite(groupId) {
+      if (!currentUser) return;
+
+      const inviteCode = generateInviteCode();
+
+      const { data, error } = await client
+        .from("ride_group_invites")
+        .insert({
+          group_id: groupId,
+          invite_code: inviteCode,
+          created_by: currentUser.id,
+          is_active: true
+        })
+        .select("*")
+        .single();
+
+      if (error) {
+        alert(error.message);
+        return;
+      }
+
+      const inviteLink = `https://bikeridegreen.ca/join.html?code=${encodeURIComponent(inviteCode)}`;
+
+      try {
+        await navigator.clipboard.writeText(inviteLink);
+        alert(`Invite link copied:\n${inviteLink}`);
+      } catch {
+        alert(`Invite link created:\n${inviteLink}`);
+      }
+    }
+
+async function loadGroups() {
+  if (!currentUser) return;
+
+  const { data, error } = await client
+    .from("ride_groups")
+    .select("id, name, group_type, description, created_at")
+    .eq("owner_id", currentUser.id)
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    console.error("Could not load groups:", error.message);
+
+    const section = document.getElementById("groupsSection");
+    const list = document.getElementById("myGroupsList");
+
+    if (section) section.classList.remove("hidden");
+    if (list) {
+      list.innerHTML = `<div class="empty">Could not load groups: ${escapeHtml(error.message)}</div>`;
+    }
+
+    return;
+  }
+
+  allGroups = data || [];
+  renderGroups();
+}
+function renderGroups() {
+  const section = document.getElementById("groupsSection");
+  const list = document.getElementById("myGroupsList");
+
+  if (!section || !list) return;
+
+  if (!allGroups.length) {
+    section.classList.add("hidden");
+    list.innerHTML = "";
+    return;
+  }
+
+  section.classList.remove("hidden");
+
+  list.innerHTML = allGroups.map(group => {
+    return `
+      <article class="group-card">
+        <div>
+          <div class="group-title">${escapeHtml(group.name)}</div>
+          <div class="group-meta">
+            ${escapeHtml(groupTypeLabel(group.group_type))} • owner
+          </div>
+          ${
+            group.description
+              ? `<div class="group-meta">${escapeHtml(group.description)}</div>`
+              : ""
+          }
+        </div>
+
+        <div class="group-actions">
+          <button class="btn-ghost" onclick="createGroupInvite('${escapeHtml(group.id)}')">
+            Create invite
+          </button>
+        </div>
+      </article>
+    `;
+  }).join("");
+}
+
+    function groupTypeLabel(type) {
+      if (type === "club") return "Club";
+      if (type === "riding_party") return "Riding party";
+      if (type === "family") return "Family";
+      return "Group";
     }
 
     async function loadRides() {
@@ -957,22 +1310,27 @@
             <div class="ride-date">${escapeHtml(date)}</div>
             <div class="ride-small">ID: ${escapeHtml(shortId(ride.local_ride_id || ride.id))}</div>
           </div>
+
           <div>
             <div class="metric-label">Benchmark</div>
             <div class="metric-value green">${formatNumber(benchmark, 1)}%</div>
           </div>
+
           <div>
             <div class="metric-label">Distance</div>
             <div class="metric-value">${formatNumber(distance, 2)} ${escapeHtml(ride.distance_unit || "")}</div>
           </div>
+
           <div>
             <div class="metric-label">Avg speed</div>
             <div class="metric-value">${formatNumber(avgSpeed, 1)} ${escapeHtml(speedUnitLabel(ride.speed_unit))}</div>
           </div>
+
           <div>
             <div class="metric-label">Elevation</div>
             <div class="metric-value">${formatNumber(elevation, 0)} ${escapeHtml(ride.elevation_unit || "")}</div>
           </div>
+
           <div>
             <div class="metric-label">Calories</div>
             <div class="metric-value">${escapeHtml(String(calories))} kcal</div>
@@ -998,132 +1356,150 @@
       document.getElementById("statDuration").textContent = formatDuration(durationSeconds);
       document.getElementById("statBenchmark").textContent = `${formatNumber(bestBenchmark, 1)}%`;
     }
-    
+
     function chartMetricColors(metric) {
-  if (metric === "distance") {
-    return {
-      background: "rgba(59,130,246,0.62)",     // distance blue
-      hover: "rgba(96,165,250,0.86)"
-    };
-  }
-
-  if (metric === "benchmark") {
-    return {
-      background: "rgba(34,197,94,0.62)",      // benchmark green
-      hover: "rgba(74,222,128,0.86)"
-    };
-  }
-
-  if (metric === "calories") {
-    return {
-      background: "rgba(249,115,22,0.62)",     // calories orange
-      hover: "rgba(251,146,60,0.86)"
-    };
-  }
-
-  if (metric === "speed") {
-    return {
-      background: "rgba(239,68,68,0.62)",      // average speed red
-      hover: "rgba(248,113,113,0.86)"
-    };
-  }
-
-  if (metric === "duration") {
-    return {
-      background: "rgba(21,128,61,0.68)",      // time dark green
-      hover: "rgba(34,197,94,0.88)"
-    };
-  }
-
-  if (metric === "elevation") {
-    return {
-      background: "rgba(146,64,14,0.68)",      // elevation brown
-      hover: "rgba(180,83,9,0.88)"
-    };
-  }
-
-  return {
-    background: "rgba(34,197,94,0.55)",
-    hover: "rgba(74,222,128,0.75)"
-  };
-}
-    function updateRideChart(rides) {
-  const canvas = document.getElementById("rideChart");
-  const chartSubtitle = document.getElementById("chartSubtitle");
-
-  if (!canvas) return;
-
-  const metric = document.getElementById("chartMetric").value;
-  const year = document.getElementById("yearFilter").value;
-  const month = document.getElementById("monthFilter").value;
-  const chartData = buildChartData(rides, metric, Boolean(month));
-  const metricInfo = chartMetricInfo(metric, rides);
-  const metricColors = chartMetricColors(metric);
-
-  chartSubtitle.textContent = month
-    ? "Daily values for the selected month."
-    : year ? "Monthly values for the selected year."
-    : "Monthly values across all uploaded rides.";
-
-  if (rideChart) rideChart.destroy();
-
-  rideChart = new Chart(canvas, {
-    type: "bar",
-    data: {
-      labels: chartData.labels,
-      datasets: [{
-        label: metricInfo.label,
-        data: chartData.values,
-        borderWidth: 0,
-        borderRadius: 6,
-        backgroundColor: metricColors.background,
-        hoverBackgroundColor: metricColors.hover
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: {
-          labels: {
-            color: "#9ca3af",
-            font: { size: 13, weight: "600" },
-            boxWidth: 10,
-            boxHeight: 10,
-            borderRadius: 3
-          }
-        },
-        tooltip: {
-          backgroundColor: "rgba(13,22,16,0.92)",
-          titleColor: "#f0fdf4",
-          bodyColor: "#9ca3af",
-          borderColor: metricColors.background,
-          borderWidth: 1,
-          padding: 12,
-          cornerRadius: 10,
-          callbacks: {
-            label: ctx => `${metricInfo.label}: ${formatNumber(ctx.raw, metricInfo.decimals)} ${metricInfo.unit}`
-          }
-        }
-      },
-      scales: {
-        x: {
-          ticks: { color: "#8a958f", font: { size: 12 } },
-          grid: { color: "rgba(255,255,255,0.05)", drawBorder: false }
-        },
-        y: {
-          beginAtZero: true,
-          ticks: {
-            color: "#8a958f",
-            font: { size: 12 },
-            callback: v => `${v}${metricInfo.shortUnit}`
-          },
-          grid: { color: "rgba(255,255,255,0.05)", drawBorder: false }
-        }
+      if (metric === "distance") {
+        return {
+          background: "rgba(59,130,246,0.62)",
+          hover: "rgba(96,165,250,0.86)"
+        };
       }
+
+      if (metric === "benchmark") {
+        return {
+          background: "rgba(34,197,94,0.62)",
+          hover: "rgba(74,222,128,0.86)"
+        };
+      }
+
+      if (metric === "calories") {
+        return {
+          background: "rgba(249,115,22,0.62)",
+          hover: "rgba(251,146,60,0.86)"
+        };
+      }
+
+      if (metric === "speed") {
+        return {
+          background: "rgba(239,68,68,0.62)",
+          hover: "rgba(248,113,113,0.86)"
+        };
+      }
+
+      if (metric === "duration") {
+        return {
+          background: "rgba(21,128,61,0.68)",
+          hover: "rgba(34,197,94,0.88)"
+        };
+      }
+
+      if (metric === "elevation") {
+        return {
+          background: "rgba(146,64,14,0.68)",
+          hover: "rgba(180,83,9,0.88)"
+        };
+      }
+
+      return {
+        background: "rgba(34,197,94,0.55)",
+        hover: "rgba(74,222,128,0.75)"
+      };
     }
-  });
-}
+
+    function updateRideChart(rides) {
+      const canvas = document.getElementById("rideChart");
+      const chartSubtitle = document.getElementById("chartSubtitle");
+
+      if (!canvas) return;
+
+      const metric = document.getElementById("chartMetric").value;
+      const year = document.getElementById("yearFilter").value;
+      const month = document.getElementById("monthFilter").value;
+      const chartData = buildChartData(rides, metric, Boolean(month));
+      const metricInfo = chartMetricInfo(metric, rides);
+      const metricColors = chartMetricColors(metric);
+
+      chartSubtitle.textContent = month
+        ? "Daily values for the selected month."
+        : year ? "Monthly values for the selected year."
+        : "Monthly values across all uploaded rides.";
+
+      if (rideChart) rideChart.destroy();
+
+      rideChart = new Chart(canvas, {
+        type: "bar",
+        data: {
+          labels: chartData.labels,
+          datasets: [{
+            label: metricInfo.label,
+            data: chartData.values,
+            borderWidth: 0,
+            borderRadius: 6,
+            backgroundColor: metricColors.background,
+            hoverBackgroundColor: metricColors.hover
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              labels: {
+                color: "#9ca3af",
+                font: {
+                  size: 13,
+                  weight: "600"
+                },
+                boxWidth: 10,
+                boxHeight: 10,
+                borderRadius: 3
+              }
+            },
+            tooltip: {
+              backgroundColor: "rgba(13,22,16,0.92)",
+              titleColor: "#f0fdf4",
+              bodyColor: "#9ca3af",
+              borderColor: metricColors.background,
+              borderWidth: 1,
+              padding: 12,
+              cornerRadius: 10,
+              callbacks: {
+                label: ctx => `${metricInfo.label}: ${formatNumber(ctx.raw, metricInfo.decimals)} ${metricInfo.unit}`
+              }
+            }
+          },
+          scales: {
+            x: {
+              ticks: {
+                color: "#8a958f",
+                font: {
+                  size: 12
+                }
+              },
+              grid: {
+                color: "rgba(255,255,255,0.05)",
+                drawBorder: false
+              }
+            },
+            y: {
+              beginAtZero: true,
+              ticks: {
+                color: "#8a958f",
+                font: {
+                  size: 12
+                },
+                callback: v => `${v}${metricInfo.shortUnit}`
+              },
+              grid: {
+                color: "rgba(255,255,255,0.05)",
+                drawBorder: false
+              }
+            }
+          }
+        }
+      });
+    }
+
     function buildChartData(rides, metric, showDays) {
       const groups = {};
 
@@ -1159,13 +1535,67 @@
 
     function chartMetricInfo(metric, rides) {
       const f = rides[0] || {};
-      if (metric === "distance") return { label: "Distance", unit: f.distance_unit || "", shortUnit: f.distance_unit ? ` ${f.distance_unit}` : "", decimals: 1 };
-      if (metric === "duration") return { label: "Time", unit: "hours", shortUnit: "h", decimals: 1 };
-      if (metric === "benchmark") return { label: "Benchmark", unit: "%", shortUnit: "%", decimals: 1 };
-      if (metric === "speed") return { label: "Average speed", unit: speedUnitLabel(f.speed_unit), shortUnit: f.speed_unit === "kmh" ? " km/h" : f.speed_unit ? ` ${f.speed_unit}` : "", decimals: 1 };
-      if (metric === "elevation") return { label: "Elevation", unit: f.elevation_unit || "", shortUnit: f.elevation_unit ? ` ${f.elevation_unit}` : "", decimals: 0 };
-      if (metric === "calories") return { label: "Calories", unit: "kcal", shortUnit: " kcal", decimals: 0 };
-      return { label: "Value", unit: "", shortUnit: "", decimals: 1 };
+
+      if (metric === "distance") {
+        return {
+          label: "Distance",
+          unit: f.distance_unit || "",
+          shortUnit: f.distance_unit ? ` ${f.distance_unit}` : "",
+          decimals: 1
+        };
+      }
+
+      if (metric === "duration") {
+        return {
+          label: "Time",
+          unit: "hours",
+          shortUnit: "h",
+          decimals: 1
+        };
+      }
+
+      if (metric === "benchmark") {
+        return {
+          label: "Benchmark",
+          unit: "%",
+          shortUnit: "%",
+          decimals: 1
+        };
+      }
+
+      if (metric === "speed") {
+        return {
+          label: "Average speed",
+          unit: speedUnitLabel(f.speed_unit),
+          shortUnit: f.speed_unit === "kmh" ? " km/h" : f.speed_unit ? ` ${f.speed_unit}` : "",
+          decimals: 1
+        };
+      }
+
+      if (metric === "elevation") {
+        return {
+          label: "Elevation",
+          unit: f.elevation_unit || "",
+          shortUnit: f.elevation_unit ? ` ${f.elevation_unit}` : "",
+          decimals: 0
+        };
+      }
+
+      if (metric === "calories") {
+        return {
+          label: "Calories",
+          unit: "kcal",
+          shortUnit: " kcal",
+          decimals: 0
+        };
+      }
+
+      return {
+        label: "Value",
+        unit: "",
+        shortUnit: "",
+        decimals: 1
+      };
     }
 
     function average(rows, key) {
@@ -1176,13 +1606,21 @@
     function formatChartDay(value) {
       const date = new Date(value);
       if (Number.isNaN(date.getTime())) return value;
-      return date.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+
+      return date.toLocaleDateString(undefined, {
+        month: "short",
+        day: "numeric"
+      });
     }
 
     function formatChartMonth(value) {
       const date = new Date(`${value}-01T00:00:00`);
       if (Number.isNaN(date.getTime())) return value;
-      return date.toLocaleDateString(undefined, { month: "short", year: "numeric" });
+
+      return date.toLocaleDateString(undefined, {
+        month: "short",
+        year: "numeric"
+      });
     }
 
     function populateYearFilter() {
@@ -1205,6 +1643,7 @@
       loginSection.classList.add("hidden");
       dashboardSection.classList.remove("hidden");
       signedInActions.classList.remove("hidden");
+
       await loadProfile(user);
     }
 
@@ -1216,6 +1655,9 @@
       currentProfile = null;
 
       if (settingsPanel) settingsPanel.classList.add("hidden");
+
+      const groupsSection = document.getElementById("groupsSection");
+      if (groupsSection) groupsSection.classList.add("hidden");
 
       showLoginStatus("");
     }
@@ -1248,6 +1690,7 @@
 
     function formatDuration(totalSeconds) {
       totalSeconds = Math.max(0, Number(totalSeconds) || 0);
+
       const hours = Math.floor(totalSeconds / 3600);
       const minutes = Math.floor((totalSeconds % 3600) / 60);
       const seconds = Math.floor(totalSeconds % 60);
@@ -1294,11 +1737,15 @@
     client.auth.onAuthStateChange((_event, session) => {
       if (session && session.user) {
         currentUser = session.user;
-        showDashboard(session.user).then(() => loadRides());
+
+        showDashboard(session.user).then(async () => {
+          await refreshDashboard();
+        });
       } else {
         currentUser = null;
         currentProfile = null;
         allRides = [];
+        allGroups = [];
 
         if (rideChart) {
           rideChart.destroy();
