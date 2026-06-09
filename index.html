@@ -8,6 +8,7 @@
   <meta name="description" content="Bike Ride Green private portal for uploaded ride summaries, groups, family, training partners, and cycling clubs." />
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
   <style>
     :root {
@@ -244,6 +245,43 @@
       margin: 20px 0;
     }
 
+    .chart-card {
+      margin: 20px 0;
+      background: rgba(255,255,255,0.055);
+      border: 1px solid var(--border);
+      border-radius: 22px;
+      padding: 18px;
+    }
+
+    .chart-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    .chart-title {
+      font-size: 20px;
+      font-weight: 800;
+    }
+
+    .chart-subtitle {
+      color: var(--muted);
+      font-size: 13px;
+      margin-top: 4px;
+      line-height: 1.4;
+    }
+
+    .chart-control {
+      width: 220px;
+    }
+
+    .chart-wrap {
+      height: 320px;
+      position: relative;
+    }
+
     .rides-list {
       display: grid;
       gap: 12px;
@@ -328,6 +366,21 @@
       .top-actions {
         width: 100%;
         justify-content: flex-start;
+      }
+    }
+
+    @media (max-width: 700px) {
+      .chart-header {
+        align-items: stretch;
+        flex-direction: column;
+      }
+
+      .chart-control {
+        width: 100%;
+      }
+
+      .chart-wrap {
+        height: 280px;
       }
     }
 
@@ -467,6 +520,28 @@
           </select>
         </div>
 
+        <div class="chart-card">
+          <div class="chart-header">
+            <div>
+              <div class="chart-title">Performance Chart</div>
+              <div id="chartSubtitle" class="chart-subtitle">Chart follows the selected year and month filters.</div>
+            </div>
+
+            <select id="chartMetric" class="chart-control" onchange="renderRides()">
+              <option value="distance">Distance</option>
+              <option value="duration">Time</option>
+              <option value="benchmark">Benchmark</option>
+              <option value="speed">Average speed</option>
+              <option value="elevation">Elevation</option>
+              <option value="calories">Calories</option>
+            </select>
+          </div>
+
+          <div class="chart-wrap">
+            <canvas id="rideChart"></canvas>
+          </div>
+        </div>
+
         <div id="ridesList" class="rides-list"></div>
 
         <div class="footer-note">
@@ -484,6 +559,7 @@
 
     let allRides = [];
     let currentUser = null;
+    let rideChart = null;
 
     const loginSection = document.getElementById("loginSection");
     const dashboardSection = document.getElementById("dashboardSection");
@@ -543,6 +619,12 @@
       await client.auth.signOut();
       currentUser = null;
       allRides = [];
+
+      if (rideChart) {
+        rideChart.destroy();
+        rideChart = null;
+      }
+
       showLogin();
     }
 
@@ -597,6 +679,7 @@
       }
 
       updateStats(rides);
+      updateRideChart(rides);
 
       if (!rides.length) {
         ridesList.innerHTML = `<div class="empty">No rides found.</div>`;
@@ -668,6 +751,242 @@
       document.getElementById("statElevation").textContent = `${formatNumber(elevation, 0)} ${elevationUnit}`;
       document.getElementById("statDuration").textContent = formatDuration(durationSeconds);
       document.getElementById("statBenchmark").textContent = `${formatNumber(bestBenchmark, 1)}%`;
+    }
+
+    function updateRideChart(rides) {
+      const canvas = document.getElementById("rideChart");
+      const chartSubtitle = document.getElementById("chartSubtitle");
+
+      if (!canvas) return;
+
+      const metric = document.getElementById("chartMetric").value;
+      const year = document.getElementById("yearFilter").value;
+      const month = document.getElementById("monthFilter").value;
+
+      const chartData = buildChartData(rides, metric, Boolean(month));
+      const metricInfo = chartMetricInfo(metric, rides);
+
+      chartSubtitle.textContent = month
+        ? "Daily ride values for the selected month."
+        : year
+          ? "Monthly values for the selected year."
+          : "Monthly values across all uploaded rides.";
+
+      if (rideChart) {
+        rideChart.destroy();
+      }
+
+      rideChart = new Chart(canvas, {
+        type: "bar",
+        data: {
+          labels: chartData.labels,
+          datasets: [{
+            label: metricInfo.label,
+            data: chartData.values,
+            borderWidth: 1,
+            borderRadius: 8,
+            backgroundColor: "rgba(46, 204, 113, 0.70)",
+            borderColor: "rgba(134, 239, 172, 1)"
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              labels: {
+                color: "#f9fafb",
+                font: {
+                  weight: "700"
+                }
+              }
+            },
+            tooltip: {
+              callbacks: {
+                label: function(context) {
+                  return `${metricInfo.label}: ${formatNumber(context.raw, metricInfo.decimals)} ${metricInfo.unit}`;
+                }
+              }
+            }
+          },
+          scales: {
+            x: {
+              ticks: {
+                color: "#d1d5db"
+              },
+              grid: {
+                color: "rgba(255,255,255,0.08)"
+              }
+            },
+            y: {
+              beginAtZero: true,
+              ticks: {
+                color: "#d1d5db",
+                callback: function(value) {
+                  return `${value}${metricInfo.shortUnit}`;
+                }
+              },
+              grid: {
+                color: "rgba(255,255,255,0.08)"
+              }
+            }
+          }
+        }
+      });
+    }
+
+    function buildChartData(rides, metric, showDays) {
+      const groups = {};
+
+      rides.forEach(ride => {
+        const key = showDays
+          ? (ride.ride_day || "").slice(0, 10)
+          : (ride.ride_day || "").slice(0, 7);
+
+        if (!key) return;
+
+        if (!groups[key]) {
+          groups[key] = [];
+        }
+
+        groups[key].push(ride);
+      });
+
+      const keys = Object.keys(groups).sort();
+
+      return {
+        labels: keys.map(key => showDays ? formatChartDay(key) : formatChartMonth(key)),
+        values: keys.map(key => chartGroupValue(groups[key], metric))
+      };
+    }
+
+    function chartGroupValue(rides, metric) {
+      if (!rides.length) return 0;
+
+      if (metric === "distance") {
+        return sum(rides, "distance_value");
+      }
+
+      if (metric === "duration") {
+        const seconds = rides.reduce((total, ride) => total + (Number(ride.duration_seconds) || 0), 0);
+        return seconds / 3600;
+      }
+
+      if (metric === "benchmark") {
+        return average(rides, "personal_benchmark");
+      }
+
+      if (metric === "speed") {
+        return average(rides, "average_speed_value");
+      }
+
+      if (metric === "elevation") {
+        return sum(rides, "elevation_gain_value");
+      }
+
+      if (metric === "calories") {
+        return rides.reduce((total, ride) => total + (Number(ride.calories) || 0), 0);
+      }
+
+      return 0;
+    }
+
+    function chartMetricInfo(metric, rides) {
+      const firstRide = rides[0] || {};
+
+      if (metric === "distance") {
+        return {
+          label: "Distance",
+          unit: firstRide.distance_unit || "",
+          shortUnit: firstRide.distance_unit ? ` ${firstRide.distance_unit}` : "",
+          decimals: 1
+        };
+      }
+
+      if (metric === "duration") {
+        return {
+          label: "Time",
+          unit: "hours",
+          shortUnit: "h",
+          decimals: 1
+        };
+      }
+
+      if (metric === "benchmark") {
+        return {
+          label: "Benchmark",
+          unit: "%",
+          shortUnit: "%",
+          decimals: 1
+        };
+      }
+
+      if (metric === "speed") {
+        return {
+          label: "Average speed",
+          unit: speedUnitLabel(firstRide.speed_unit),
+          shortUnit: firstRide.speed_unit === "kmh" ? " km/h" : firstRide.speed_unit ? ` ${firstRide.speed_unit}` : "",
+          decimals: 1
+        };
+      }
+
+      if (metric === "elevation") {
+        return {
+          label: "Elevation",
+          unit: firstRide.elevation_unit || "",
+          shortUnit: firstRide.elevation_unit ? ` ${firstRide.elevation_unit}` : "",
+          decimals: 0
+        };
+      }
+
+      if (metric === "calories") {
+        return {
+          label: "Calories",
+          unit: "kcal",
+          shortUnit: " kcal",
+          decimals: 0
+        };
+      }
+
+      return {
+        label: "Value",
+        unit: "",
+        shortUnit: "",
+        decimals: 1
+      };
+    }
+
+    function average(rows, key) {
+      if (!rows.length) return 0;
+
+      const total = rows.reduce((sum, row) => sum + (Number(row[key]) || 0), 0);
+      return total / rows.length;
+    }
+
+    function formatChartDay(value) {
+      const date = new Date(value);
+
+      if (Number.isNaN(date.getTime())) {
+        return value;
+      }
+
+      return date.toLocaleDateString(undefined, {
+        month: "short",
+        day: "numeric"
+      });
+    }
+
+    function formatChartMonth(value) {
+      const date = new Date(`${value}-01T00:00:00`);
+
+      if (Number.isNaN(date.getTime())) {
+        return value;
+      }
+
+      return date.toLocaleDateString(undefined, {
+        month: "short",
+        year: "numeric"
+      });
     }
 
     function populateYearFilter() {
@@ -788,6 +1107,12 @@
       } else {
         currentUser = null;
         allRides = [];
+
+        if (rideChart) {
+          rideChart.destroy();
+          rideChart = null;
+        }
+
         showLogin();
       }
     });
