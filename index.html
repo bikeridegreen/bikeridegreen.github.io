@@ -501,6 +501,106 @@
       border-color: rgba(34,197,94,0.2);
     }
 
+    .year-group {
+      border: 1px solid rgba(34,197,94,0.16);
+      border-radius: 20px;
+      background: rgba(34,197,94,0.025);
+      overflow: hidden;
+    }
+
+    .year-header {
+      width: 100%;
+      border-radius: 0;
+      padding: 20px;
+      background: rgba(34,197,94,0.055);
+      color: var(--text);
+      border: 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      text-align: left;
+    }
+
+    .year-header:hover {
+      background: rgba(34,197,94,0.10);
+    }
+
+    .year-title {
+      font-size: 19px;
+      font-weight: 900;
+    }
+
+    .year-summary {
+      color: var(--muted);
+      font-size: 13px;
+      margin-top: 4px;
+    }
+
+    .year-chevron {
+      color: var(--green-light);
+      font-size: 20px;
+      font-weight: 900;
+    }
+
+    .year-months {
+      display: grid;
+      gap: 10px;
+      padding: 12px;
+    }
+
+    .month-group {
+      border: 1px solid var(--border-soft);
+      border-radius: 18px;
+      background: rgba(255,255,255,0.025);
+      overflow: hidden;
+    }
+
+    .month-header {
+      width: 100%;
+      border-radius: 0;
+      padding: 18px 20px;
+      background: rgba(34,197,94,0.04);
+      color: var(--text);
+      border: 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      text-align: left;
+    }
+
+    .month-header:hover {
+      background: rgba(34,197,94,0.08);
+    }
+
+    .month-title {
+      font-size: 17px;
+      font-weight: 800;
+    }
+
+    .month-summary {
+      color: var(--muted);
+      font-size: 13px;
+      margin-top: 4px;
+    }
+
+    .month-chevron {
+      color: var(--green-light);
+      font-size: 18px;
+      font-weight: 800;
+    }
+
+    .month-rides {
+      display: grid;
+      gap: 10px;
+      padding: 12px;
+    }
+
+    .month-rides .ride-card {
+      margin: 0;
+    }
+
     .ride-date {
       font-weight: 700;
       font-size: 15px;
@@ -844,11 +944,11 @@
             <input id="searchInput" type="search" placeholder="Search by date or unit…" oninput="renderRides()" />
           </div>
 
-          <select id="yearFilter" onchange="renderRides()">
+          <select id="yearFilter" onchange="expandedMonths.clear(); expandedYears.clear(); renderRides()">
             <option value="">All years</option>
           </select>
 
-          <select id="monthFilter" onchange="renderRides()">
+          <select id="monthFilter" onchange="expandedMonths.clear(); expandedYears.clear(); renderRides()">
             <option value="">All months</option>
             <option value="01">January</option>
             <option value="02">February</option>
@@ -911,6 +1011,8 @@
     let currentUser = null;
     let currentProfile = null;
     let rideChart = null;
+    let expandedMonths = new Set();
+    let expandedYears = new Set();
 
     const loginSection = document.getElementById("loginSection");
     const dashboardSection = document.getElementById("dashboardSection");
@@ -992,40 +1094,40 @@
       await loadGroups();
     }
 
-  async function loadProfile(user) {
-  const { data, error } = await client
-    .from("profiles")
-    .select("id, display_name, email")
-    .eq("id", user.id)
-    .single();
+    async function loadProfile(user) {
+      const { data, error } = await client
+        .from("profiles")
+        .select("id, display_name, email")
+        .eq("id", user.id)
+        .single();
 
-  const dashboardTitle = document.getElementById("dashboardTitle");
+      const dashboardTitle = document.getElementById("dashboardTitle");
 
-  if (error) {
-    currentProfile = null;
-    userDisplayName.textContent = user.email || "Signed in";
-    displayNameInput.value = "";
+      if (error) {
+        currentProfile = null;
+        userDisplayName.textContent = user.email || "Signed in";
+        displayNameInput.value = "";
 
-    if (dashboardTitle) {
-      dashboardTitle.textContent = "My ride dashboard";
+        if (dashboardTitle) {
+          dashboardTitle.textContent = "My ride dashboard";
+        }
+
+        return;
+      }
+
+      currentProfile = data;
+
+      const displayName = (data.display_name || "").trim();
+
+      userDisplayName.textContent = displayName || user.email || "Signed in";
+      displayNameInput.value = displayName;
+
+      if (dashboardTitle) {
+        dashboardTitle.textContent = displayName
+          ? `${displayName}'s ride dashboard`
+          : "My ride dashboard";
+      }
     }
-
-    return;
-  }
-
-  currentProfile = data;
-
-  const displayName = (data.display_name || "").trim();
-
-  userDisplayName.textContent = displayName || user.email || "Signed in";
-  displayNameInput.value = displayName;
-
-  if (dashboardTitle) {
-    dashboardTitle.textContent = displayName
-      ? `${displayName}'s ride dashboard`
-      : "My ride dashboard";
-  }
-}
 
     function toggleSettings() {
       settingsStatus.textContent = "";
@@ -1072,19 +1174,19 @@
         return;
       }
 
-     currentProfile = data;
-userDisplayName.textContent = data.display_name || currentUser.email || "Signed in";
+      currentProfile = data;
+      userDisplayName.textContent = data.display_name || currentUser.email || "Signed in";
 
-const dashboardTitle = document.getElementById("dashboardTitle");
+      const dashboardTitle = document.getElementById("dashboardTitle");
 
-if (dashboardTitle) {
-  dashboardTitle.textContent = data.display_name
-    ? `${data.display_name}'s ride dashboard`
-    : "My ride dashboard";
-}
+      if (dashboardTitle) {
+        dashboardTitle.textContent = data.display_name
+          ? `${data.display_name}'s ride dashboard`
+          : "My ride dashboard";
+      }
 
-settingsStatus.classList.add("success");
-settingsStatus.textContent = "Display name saved.";
+      settingsStatus.classList.add("success");
+      settingsStatus.textContent = "Display name saved.";
     }
 
     async function createRideGroup() {
@@ -1190,70 +1292,71 @@ settingsStatus.textContent = "Display name saved.";
       }
     }
 
-async function loadGroups() {
-  if (!currentUser) return;
+    async function loadGroups() {
+      if (!currentUser) return;
 
-  const { data, error } = await client
-    .from("ride_groups")
-    .select("id, name, group_type, description, created_at")
-    .eq("owner_id", currentUser.id)
-    .order("created_at", { ascending: false });
+      const { data, error } = await client
+        .from("ride_groups")
+        .select("id, name, group_type, description, created_at")
+        .eq("owner_id", currentUser.id)
+        .order("created_at", { ascending: false });
 
-  if (error) {
-    console.error("Could not load groups:", error.message);
+      if (error) {
+        console.error("Could not load groups:", error.message);
 
-    const section = document.getElementById("groupsSection");
-    const list = document.getElementById("myGroupsList");
+        const section = document.getElementById("groupsSection");
+        const list = document.getElementById("myGroupsList");
 
-    if (section) section.classList.remove("hidden");
-    if (list) {
-      list.innerHTML = `<div class="empty">Could not load groups: ${escapeHtml(error.message)}</div>`;
+        if (section) section.classList.remove("hidden");
+        if (list) {
+          list.innerHTML = `<div class="empty">Could not load groups: ${escapeHtml(error.message)}</div>`;
+        }
+
+        return;
+      }
+
+      allGroups = data || [];
+      renderGroups();
     }
 
-    return;
-  }
+    function renderGroups() {
+      const section = document.getElementById("groupsSection");
+      const list = document.getElementById("myGroupsList");
 
-  allGroups = data || [];
-  renderGroups();
-}
-function renderGroups() {
-  const section = document.getElementById("groupsSection");
-  const list = document.getElementById("myGroupsList");
+      if (!section || !list) return;
 
-  if (!section || !list) return;
+      if (!allGroups.length) {
+        section.classList.add("hidden");
+        list.innerHTML = "";
+        return;
+      }
 
-  if (!allGroups.length) {
-    section.classList.add("hidden");
-    list.innerHTML = "";
-    return;
-  }
+      section.classList.remove("hidden");
 
-  section.classList.remove("hidden");
+      list.innerHTML = allGroups.map(group => {
+        return `
+          <article class="group-card">
+            <div>
+              <div class="group-title">${escapeHtml(group.name)}</div>
+              <div class="group-meta">
+                ${escapeHtml(groupTypeLabel(group.group_type))} • owner
+              </div>
+              ${
+                group.description
+                  ? `<div class="group-meta">${escapeHtml(group.description)}</div>`
+                  : ""
+              }
+            </div>
 
-  list.innerHTML = allGroups.map(group => {
-    return `
-      <article class="group-card">
-        <div>
-          <div class="group-title">${escapeHtml(group.name)}</div>
-          <div class="group-meta">
-            ${escapeHtml(groupTypeLabel(group.group_type))} • owner
-          </div>
-          ${
-            group.description
-              ? `<div class="group-meta">${escapeHtml(group.description)}</div>`
-              : ""
-          }
-        </div>
-
-        <div class="group-actions">
-          <button class="btn-ghost" onclick="createGroupInvite('${escapeHtml(group.id)}')">
-            Create invite
-          </button>
-        </div>
-      </article>
-    `;
-  }).join("");
-}
+            <div class="group-actions">
+              <button class="btn-ghost" onclick="createGroupInvite('${escapeHtml(group.id)}')">
+                Create invite
+              </button>
+            </div>
+          </article>
+        `;
+      }).join("");
+    }
 
     function groupTypeLabel(type) {
       if (type === "club") return "Club";
@@ -1315,7 +1418,142 @@ function renderGroups() {
         return;
       }
 
+      if (!year && !month) {
+        ridesList.innerHTML = yearlyGroupedRidesHTML(rides);
+        return;
+      }
+
+      if (year && !month) {
+        ridesList.innerHTML = monthlyGroupedRidesHTML(rides);
+        return;
+      }
+
       ridesList.innerHTML = rides.map(ride => rideCardHTML(ride)).join("");
+    }
+
+    function yearlyGroupedRidesHTML(rides) {
+      const groups = {};
+
+      rides.forEach(ride => {
+        const key = yearKeyFromRide(ride);
+        if (!key) return;
+
+        if (!groups[key]) groups[key] = [];
+        groups[key].push(ride);
+      });
+
+      const yearKeys = Object.keys(groups).sort().reverse();
+
+      return yearKeys.map(yearKey => {
+        const yearRides = groups[yearKey];
+        const isExpanded = expandedYears.has(yearKey);
+
+        return `
+          <section class="year-group">
+            <button class="year-header" onclick="toggleYear('${escapeHtml(yearKey)}')">
+              <div>
+                <div class="year-title">${escapeHtml(yearKey)}</div>
+                <div class="year-summary">${escapeHtml(monthSummaryHTML(yearRides))}</div>
+              </div>
+
+              <div class="year-chevron">${isExpanded ? "−" : "+"}</div>
+            </button>
+
+            ${
+              isExpanded
+                ? `<div class="year-months">${monthlyGroupedRidesHTML(yearRides)}</div>`
+                : ""
+            }
+          </section>
+        `;
+      }).join("");
+    }
+
+    function monthlyGroupedRidesHTML(rides) {
+      const groups = {};
+
+      rides.forEach(ride => {
+        const key = monthKeyFromRide(ride);
+        if (!key) return;
+
+        if (!groups[key]) groups[key] = [];
+        groups[key].push(ride);
+      });
+
+      const monthKeys = Object.keys(groups).sort().reverse();
+
+      return monthKeys.map(monthKey => {
+        const monthRides = groups[monthKey];
+        const isExpanded = expandedMonths.has(monthKey);
+
+        return `
+          <section class="month-group">
+            <button class="month-header" onclick="toggleMonth('${escapeHtml(monthKey)}')">
+              <div>
+                <div class="month-title">${escapeHtml(formatMonthTitle(monthKey))}</div>
+                <div class="month-summary">${escapeHtml(monthSummaryHTML(monthRides))}</div>
+              </div>
+
+              <div class="month-chevron">${isExpanded ? "−" : "+"}</div>
+            </button>
+
+            ${
+              isExpanded
+                ? `<div class="month-rides">${monthRides.map(ride => rideCardHTML(ride)).join("")}</div>`
+                : ""
+            }
+          </section>
+        `;
+      }).join("");
+    }
+
+    function yearKeyFromRide(ride) {
+      return (ride.ride_day || ride.ride_date || "").slice(0, 4);
+    }
+
+    function monthKeyFromRide(ride) {
+      return (ride.ride_day || ride.ride_date || "").slice(0, 7);
+    }
+
+    function toggleYear(yearKey) {
+      if (expandedYears.has(yearKey)) {
+        expandedYears.delete(yearKey);
+      } else {
+        expandedYears.add(yearKey);
+      }
+
+      renderRides();
+    }
+
+    function toggleMonth(monthKey) {
+      if (expandedMonths.has(monthKey)) {
+        expandedMonths.delete(monthKey);
+      } else {
+        expandedMonths.add(monthKey);
+      }
+
+      renderRides();
+    }
+
+    function formatMonthTitle(monthKey) {
+      const date = new Date(`${monthKey}-01T00:00:00`);
+
+      if (Number.isNaN(date.getTime())) return monthKey;
+
+      return date.toLocaleDateString(undefined, {
+        month: "long",
+        year: "numeric"
+      });
+    }
+
+    function monthSummaryHTML(monthRides) {
+      const rideCount = monthRides.length;
+      const distance = sum(monthRides, "distance_value");
+      const calories = monthRides.reduce((t, r) => t + (Number(r.calories) || 0), 0);
+      const durationSeconds = monthRides.reduce((t, r) => t + (Number(r.duration_seconds) || 0), 0);
+      const distanceUnit = monthRides[0]?.distance_unit || "";
+
+      return `${rideCount} ride${rideCount === 1 ? "" : "s"} • ${formatNumber(distance, 1)} ${distanceUnit} • ${Math.round(calories)} kcal • ${formatDuration(durationSeconds)}`;
     }
 
     function rideCardHTML(ride) {
