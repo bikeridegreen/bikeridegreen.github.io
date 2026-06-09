@@ -789,8 +789,8 @@
         </div>
 
         <div class="dash-header">
-          <h2>My ride dashboard</h2>
-          <p class="dash-helper">Uploaded summaries from the Bike Ride Green app. Route maps coming soon.</p>
+          <h2 id="dashboardTitle">My ride dashboard</h2>
+          <p class="dash-helper">Uploaded summaries from the Bike Ride Green app.</p>
         </div>
 
         <div class="stat-grid">
@@ -992,26 +992,40 @@
       await loadGroups();
     }
 
-    async function loadProfile(user) {
-      const { data, error } = await client
-        .from("profiles")
-        .select("id, display_name, email")
-        .eq("id", user.id)
-        .single();
+  async function loadProfile(user) {
+  const { data, error } = await client
+    .from("profiles")
+    .select("id, display_name, email")
+    .eq("id", user.id)
+    .single();
 
-      if (error) {
-        currentProfile = null;
-        userDisplayName.textContent = user.email || "Signed in";
-        displayNameInput.value = "";
-        return;
-      }
+  const dashboardTitle = document.getElementById("dashboardTitle");
 
-      currentProfile = data;
+  if (error) {
+    currentProfile = null;
+    userDisplayName.textContent = user.email || "Signed in";
+    displayNameInput.value = "";
 
-      const displayName = (data.display_name || "").trim();
-      userDisplayName.textContent = displayName || user.email || "Signed in";
-      displayNameInput.value = displayName;
+    if (dashboardTitle) {
+      dashboardTitle.textContent = "My ride dashboard";
     }
+
+    return;
+  }
+
+  currentProfile = data;
+
+  const displayName = (data.display_name || "").trim();
+
+  userDisplayName.textContent = displayName || user.email || "Signed in";
+  displayNameInput.value = displayName;
+
+  if (dashboardTitle) {
+    dashboardTitle.textContent = displayName
+      ? `${displayName}'s ride dashboard`
+      : "My ride dashboard";
+  }
+}
 
     function toggleSettings() {
       settingsStatus.textContent = "";
@@ -1058,10 +1072,19 @@
         return;
       }
 
-      currentProfile = data;
-      userDisplayName.textContent = data.display_name || currentUser.email || "Signed in";
-      settingsStatus.classList.add("success");
-      settingsStatus.textContent = "Display name saved.";
+     currentProfile = data;
+userDisplayName.textContent = data.display_name || currentUser.email || "Signed in";
+
+const dashboardTitle = document.getElementById("dashboardTitle");
+
+if (dashboardTitle) {
+  dashboardTitle.textContent = data.display_name
+    ? `${data.display_name}'s ride dashboard`
+    : "My ride dashboard";
+}
+
+settingsStatus.classList.add("success");
+settingsStatus.textContent = "Display name saved.";
     }
 
     async function createRideGroup() {
