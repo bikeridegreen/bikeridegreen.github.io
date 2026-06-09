@@ -17,10 +17,10 @@
       --green-light:  #4ade80;
       --green-dim:    #16a34a;
       --green-glow:   rgba(34,197,94,0.18);
-      --bg:           #070e0a;
-      --surface:      #0d1610;
-      --card:         #111c14;
-      --card-hover:   #162019;
+      --bg:           #0b2414;
+      --surface:      #102f1d;
+      --card:         #112918;
+      --card-hover:   #173821;
       --border:       rgba(34,197,94,0.14);
       --border-soft:  rgba(255,255,255,0.07);
       --text:         #f0fdf4;
@@ -34,34 +34,38 @@
     *, *::before, *::after { box-sizing: border-box; }
 
     body {
-      margin: 0;
-      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      min-height: 100vh;
-      -webkit-font-smoothing: antialiased;
-    }
+  margin: 0;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  background:
+    radial-gradient(circle at top left, rgba(74,222,128,0.18), transparent 34%),
+    radial-gradient(circle at bottom right, rgba(34,197,94,0.16), transparent 42%),
+    linear-gradient(180deg, #0a2414 0%, #10351f 48%, #092817 100%);
+  color: var(--text);
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
 
     body::before {
-      content: '';
-      position: fixed;
-      inset: 0;
-      background:
-        radial-gradient(ellipse 60% 40% at 20% -10%, rgba(34,197,94,0.13) 0%, transparent 65%),
-        radial-gradient(ellipse 50% 30% at 80% 105%, rgba(16,163,74,0.09) 0%, transparent 60%);
-      pointer-events: none;
-      z-index: 0;
-    }
+  content: '';
+  position: fixed;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 70% 45% at 15% -10%, rgba(74,222,128,0.20) 0%, transparent 65%),
+    radial-gradient(ellipse 55% 35% at 85% 105%, rgba(22,163,74,0.18) 0%, transparent 62%),
+    linear-gradient(135deg, rgba(34,197,94,0.05), transparent 45%);
+  pointer-events: none;
+  z-index: 0;
+}
 
     header {
-      position: sticky;
-      top: 0;
-      z-index: 100;
-      border-bottom: 1px solid var(--border);
-      background: rgba(7,14,10,0.82);
-      backdrop-filter: blur(20px);
-      -webkit-backdrop-filter: blur(20px);
-    }
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  border-bottom: 1px solid rgba(34,197,94,0.20);
+  background: rgba(8,31,17,0.84);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
 
     .header-inner {
       max-width: 1120px;
@@ -204,12 +208,13 @@
       background: rgba(239,68,68,0.18);
     }
 
-    .card {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: 20px;
-      padding: 28px;
-    }
+   .card {
+  background:
+    linear-gradient(180deg, rgba(17,41,24,0.96), rgba(12,32,18,0.96));
+  border: 1px solid rgba(34,197,94,0.22);
+  border-radius: 20px;
+  padding: 28px;
+}
 
     .settings-panel {
       margin-bottom: 20px;
