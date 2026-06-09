@@ -3,425 +3,534 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
   <title>Bike Ride Green Portal</title>
   <meta name="description" content="Bike Ride Green private portal for uploaded ride summaries, groups, family, training partners, and cycling clubs." />
-
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
   <style>
     :root {
-      --green: #2ecc71;
-      --green-dark: #16a34a;
-      --bg: #06150d;
-      --card: #111827;
-      --card-soft: #172033;
-      --text: #f9fafb;
-      --muted: #9ca3af;
-      --border: rgba(255,255,255,0.12);
-      --danger: #ef4444;
-      --blue: #38bdf8;
+      --green:        #22c55e;
+      --green-light:  #4ade80;
+      --green-dim:    #16a34a;
+      --green-glow:   rgba(34,197,94,0.18);
+      --bg:           #070e0a;
+      --surface:      #0d1610;
+      --card:         #111c14;
+      --card-hover:   #162019;
+      --border:       rgba(34,197,94,0.14);
+      --border-soft:  rgba(255,255,255,0.07);
+      --text:         #f0fdf4;
+      --text-2:       #86efac;
+      --muted:        #6b7280;
+      --muted-2:      #9ca3af;
+      --danger:       #ef4444;
+      --blue:         #38bdf8;
     }
 
-    * {
-      box-sizing: border-box;
-    }
+    *, *::before, *::after { box-sizing: border-box; }
 
     body {
       margin: 0;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
-      background:
-        radial-gradient(circle at top left, rgba(46,204,113,0.25), transparent 32%),
-        radial-gradient(circle at top right, rgba(56,189,248,0.18), transparent 30%),
-        var(--bg);
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg);
       color: var(--text);
       min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
     }
 
+    /* ─── AMBIENT BG ─── */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 60% 40% at 20% -10%, rgba(34,197,94,0.13) 0%, transparent 65%),
+        radial-gradient(ellipse 50% 30% at 80% 105%, rgba(16,163,74,0.09) 0%, transparent 60%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ─── HEADER ─── */
     header {
-      padding: 28px 20px;
-      border-bottom: 1px solid var(--border);
-      background: rgba(0,0,0,0.25);
-      backdrop-filter: blur(16px);
       position: sticky;
       top: 0;
-      z-index: 10;
+      z-index: 100;
+      border-bottom: 1px solid var(--border);
+      background: rgba(7,14,10,0.82);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
     }
 
     .header-inner {
-      max-width: 1100px;
+      max-width: 1120px;
       margin: 0 auto;
+      padding: 0 24px;
+      height: 68px;
       display: flex;
       align-items: center;
       justify-content: space-between;
       gap: 16px;
+      position: relative;
+      z-index: 1;
     }
 
     .brand {
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 14px;
     }
 
     .logo {
-  width: 56px;
-  height: 56px;
-  border-radius: 16px;
-  overflow: hidden;
-  background: linear-gradient(135deg, var(--green), #86efac);
-  display: grid;
-  place-items: center;
-  box-shadow: 0 12px 30px rgba(46,204,113,0.25);
-  flex-shrink: 0;
-}
+      width: 42px;
+      height: 42px;
+      border-radius: 12px;
+      overflow: hidden;
+      flex-shrink: 0;
+      border: 1px solid rgba(34,197,94,0.3);
+      background: #0d1f10;
+    }
 
-.logo img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
-}
+    .logo img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
 
-    h1 {
-      font-size: 24px;
+    .brand-text h1 {
+      font-size: 17px;
+      font-weight: 700;
       margin: 0;
-      line-height: 1.1;
+      letter-spacing: -0.3px;
+      color: var(--text);
     }
 
-    .subtitle {
+    .brand-text .subtitle {
+      font-size: 12px;
       color: var(--muted);
-      font-size: 14px;
-      margin-top: 4px;
+      margin: 2px 0 0;
+      letter-spacing: 0.01em;
     }
 
+    /* ─── HEADER ACTIONS ─── */
+    .top-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .email-pill {
+      font-size: 13px;
+      color: var(--muted-2);
+      background: rgba(255,255,255,0.05);
+      border: 1px solid var(--border-soft);
+      border-radius: 999px;
+      padding: 7px 14px;
+      max-width: 220px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    /* ─── MAIN ─── */
     main {
-      max-width: 1100px;
+      max-width: 1120px;
       margin: 0 auto;
-      padding: 28px 20px 60px;
+      padding: 36px 24px 80px;
+      position: relative;
+      z-index: 1;
     }
 
-    .hidden {
-      display: none !important;
+    .hidden { display: none !important; }
+
+    /* ─── BUTTONS ─── */
+    button {
+      border: 0;
+      cursor: pointer;
+      font-family: inherit;
+      font-weight: 600;
+      font-size: 14px;
+      border-radius: 999px;
+      padding: 9px 18px;
+      transition: all 0.15s ease;
+      color: #fff;
+      white-space: nowrap;
     }
 
+    button:hover { transform: translateY(-1px); }
+    button:active { transform: translateY(0); }
+    button:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
+
+    .btn-primary {
+      background: var(--green-dim);
+      box-shadow: 0 0 0 1px rgba(34,197,94,0.4), 0 4px 16px rgba(34,197,94,0.18);
+    }
+
+    .btn-primary:hover {
+      background: var(--green);
+      box-shadow: 0 0 0 1px rgba(34,197,94,0.6), 0 6px 24px rgba(34,197,94,0.28);
+    }
+
+    .btn-ghost {
+      background: transparent;
+      color: var(--muted-2);
+      border: 1px solid var(--border-soft);
+    }
+
+    .btn-ghost:hover {
+      background: rgba(255,255,255,0.06);
+      color: var(--text);
+    }
+
+    .btn-danger-soft {
+      background: rgba(239,68,68,0.1);
+      color: #fca5a5;
+      border: 1px solid rgba(239,68,68,0.25);
+    }
+
+    .btn-danger-soft:hover {
+      background: rgba(239,68,68,0.18);
+    }
+
+    /* ─── CARD ─── */
     .card {
-      background: rgba(17,24,39,0.88);
+      background: var(--card);
       border: 1px solid var(--border);
-      border-radius: 24px;
-      padding: 22px;
-      box-shadow: 0 20px 60px rgba(0,0,0,0.28);
-      backdrop-filter: blur(18px);
+      border-radius: 20px;
+      padding: 28px;
+    }
+
+    /* ─── LOGIN ─── */
+    .login-wrap {
+      min-height: calc(100vh - 120px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
 
     .login-card {
-      max-width: 460px;
-      margin: 50px auto;
+      width: 100%;
+      max-width: 440px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      padding: 40px;
     }
 
-    .login-card h2,
-    .section-title {
-      margin: 0 0 10px;
-      font-size: 28px;
+    .login-eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--green-light);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-bottom: 14px;
+    }
+
+    .login-eyebrow::before {
+      content: '';
+      display: inline-block;
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--green);
+      box-shadow: 0 0 8px var(--green);
+    }
+
+    .login-card h2 {
+      font-size: 26px;
+      font-weight: 800;
+      margin: 0 0 8px;
+      letter-spacing: -0.5px;
     }
 
     .helper {
-      color: var(--muted);
-      line-height: 1.5;
-      margin: 0 0 20px;
+      color: var(--muted-2);
+      font-size: 14px;
+      line-height: 1.6;
+      margin: 0 0 28px;
     }
+
+    /* ─── FORM ─── */
+    .field { margin-bottom: 16px; }
 
     label {
       display: block;
-      font-size: 14px;
-      color: var(--muted);
-      margin-bottom: 8px;
+      font-size: 12px;
       font-weight: 600;
+      letter-spacing: 0.05em;
+      color: var(--muted-2);
+      text-transform: uppercase;
+      margin-bottom: 8px;
     }
 
     input, select {
       width: 100%;
-      padding: 14px 14px;
-      border-radius: 14px;
-      border: 1px solid var(--border);
-      background: rgba(255,255,255,0.06);
+      padding: 13px 16px;
+      border-radius: 12px;
+      border: 1px solid var(--border-soft);
+      background: rgba(255,255,255,0.04);
       color: var(--text);
-      font-size: 16px;
+      font-size: 15px;
+      font-family: inherit;
       outline: none;
+      transition: border-color 0.15s, box-shadow 0.15s;
     }
+
+    input::placeholder { color: var(--muted); }
 
     input:focus, select:focus {
-      border-color: rgba(46,204,113,0.75);
-      box-shadow: 0 0 0 4px rgba(46,204,113,0.12);
+      border-color: rgba(34,197,94,0.5);
+      box-shadow: 0 0 0 3px rgba(34,197,94,0.1);
     }
 
-    .field {
-      margin-bottom: 14px;
-    }
-
-    button {
-      border: 0;
-      border-radius: 999px;
-      padding: 13px 18px;
-      font-weight: 700;
-      font-size: 15px;
-      cursor: pointer;
-      color: white;
-      background: var(--green-dark);
-      transition: transform 0.12s ease, opacity 0.12s ease;
-    }
-
-    button:hover {
-      transform: translateY(-1px);
-    }
-
-    button:disabled {
-      opacity: 0.55;
-      cursor: not-allowed;
-      transform: none;
-    }
+    select option { background: #1a2e1e; }
 
     .button-row {
       display: flex;
       gap: 10px;
       flex-wrap: wrap;
-      align-items: center;
+      margin-top: 6px;
     }
 
-    .btn-secondary {
-      background: rgba(255,255,255,0.10);
-      color: var(--text);
-      border: 1px solid var(--border);
-    }
-
-    .btn-danger {
-      background: rgba(239,68,68,0.16);
-      color: #fecaca;
-      border: 1px solid rgba(239,68,68,0.35);
-    }
-
-    .top-actions {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      flex-wrap: wrap;
-      justify-content: flex-end;
-    }
-
-    .email-pill {
-      color: var(--muted);
-      border: 1px solid var(--border);
-      border-radius: 999px;
-      padding: 10px 14px;
-      background: rgba(255,255,255,0.06);
+    .status {
+      margin-top: 14px;
       font-size: 14px;
-      max-width: 100%;
-      overflow-wrap: anywhere;
+      color: #fca5a5;
+      min-height: 20px;
     }
 
-    .grid {
+    /* ─── DASHBOARD HEADER ─── */
+    .dash-header {
+      margin-bottom: 28px;
+    }
+
+    .dash-header h2 {
+      font-size: 28px;
+      font-weight: 800;
+      margin: 0 0 6px;
+      letter-spacing: -0.6px;
+    }
+
+    .dash-helper {
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    /* ─── STAT GRID ─── */
+    .stat-grid {
       display: grid;
       grid-template-columns: repeat(6, 1fr);
-      gap: 14px;
-      margin: 22px 0;
+      gap: 12px;
+      margin: 24px 0;
     }
 
     .stat {
-      background: rgba(255,255,255,0.07);
+      background: rgba(34,197,94,0.04);
       border: 1px solid var(--border);
-      border-radius: 18px;
-      padding: 16px;
-      min-height: 100px;
+      border-radius: 16px;
+      padding: 18px 16px;
+      transition: background 0.2s;
+    }
+
+    .stat:hover {
+      background: rgba(34,197,94,0.08);
     }
 
     .stat-label {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
       color: var(--muted);
-      font-size: 13px;
       margin-bottom: 10px;
     }
 
     .stat-value {
-      font-size: 24px;
+      font-size: 22px;
       font-weight: 800;
-      line-height: 1.15;
+      color: var(--text);
+      letter-spacing: -0.5px;
+      line-height: 1.1;
     }
 
+    .stat-value.accent { color: var(--green-light); }
+
+    /* ─── CONTROLS ─── */
     .controls {
       display: grid;
-      grid-template-columns: 1fr 180px 180px;
-      gap: 12px;
+      grid-template-columns: 1fr 160px 160px;
+      gap: 10px;
       margin: 20px 0;
     }
 
+    .search-wrap {
+      position: relative;
+    }
+
+    .search-wrap input {
+      padding-left: 42px;
+    }
+
+    .search-icon {
+      position: absolute;
+      left: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--muted);
+      font-size: 16px;
+      pointer-events: none;
+    }
+
+    /* ─── CHART ─── */
     .chart-card {
+      background: rgba(255,255,255,0.025);
+      border: 1px solid var(--border-soft);
+      border-radius: 18px;
+      padding: 22px;
       margin: 20px 0;
-      background: rgba(255,255,255,0.055);
-      border: 1px solid var(--border);
-      border-radius: 22px;
-      padding: 18px;
     }
 
     .chart-header {
       display: flex;
       justify-content: space-between;
-      align-items: center;
+      align-items: flex-start;
       gap: 12px;
-      margin-bottom: 14px;
+      margin-bottom: 18px;
     }
 
     .chart-title {
-      font-size: 20px;
-      font-weight: 800;
+      font-size: 16px;
+      font-weight: 700;
+      margin: 0 0 4px;
     }
 
     .chart-subtitle {
       color: var(--muted);
       font-size: 13px;
-      margin-top: 4px;
-      line-height: 1.4;
     }
 
     .chart-control {
-      width: 220px;
+      width: 200px;
+      font-size: 13px;
     }
 
     .chart-wrap {
-      height: 320px;
+      height: 300px;
       position: relative;
     }
 
+    /* ─── RIDES ─── */
     .rides-list {
       display: grid;
-      gap: 12px;
+      gap: 10px;
     }
 
     .ride-card {
-      background: rgba(255,255,255,0.065);
-      border: 1px solid var(--border);
-      border-radius: 20px;
-      padding: 16px;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid var(--border-soft);
+      border-radius: 16px;
+      padding: 18px 20px;
       display: grid;
-      grid-template-columns: 1.1fr repeat(5, 1fr);
-      gap: 12px;
+      grid-template-columns: 1.3fr repeat(5, 1fr);
+      gap: 16px;
       align-items: center;
+      transition: background 0.15s, border-color 0.15s;
+      cursor: default;
+    }
+
+    .ride-card:hover {
+      background: rgba(34,197,94,0.05);
+      border-color: rgba(34,197,94,0.2);
     }
 
     .ride-date {
-      font-weight: 800;
-      font-size: 17px;
+      font-weight: 700;
+      font-size: 15px;
+      letter-spacing: -0.2px;
     }
 
     .ride-small {
       color: var(--muted);
-      font-size: 13px;
+      font-size: 12px;
       margin-top: 4px;
     }
 
     .metric-label {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
       color: var(--muted);
-      font-size: 12px;
-      margin-bottom: 3px;
+      margin-bottom: 5px;
     }
 
     .metric-value {
-      font-weight: 750;
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text);
     }
 
-    .benchmark {
-      color: #4ade80;
+    .metric-value.green { color: var(--green-light); }
+
+    /* ─── DIVIDER ─── */
+    .section-divider {
+      border: 0;
+      border-top: 1px solid var(--border-soft);
+      margin: 28px 0 24px;
     }
 
-    .status {
-      margin-top: 14px;
-      color: var(--muted);
-      line-height: 1.4;
-    }
-
+    /* ─── EMPTY ─── */
     .empty {
       text-align: center;
       color: var(--muted);
-      padding: 42px 18px;
-      background: rgba(255,255,255,0.045);
-      border: 1px dashed var(--border);
-      border-radius: 20px;
+      padding: 52px 20px;
+      background: rgba(255,255,255,0.02);
+      border: 1px dashed rgba(255,255,255,0.1);
+      border-radius: 16px;
+      font-size: 15px;
     }
 
+    /* ─── FOOTER ─── */
     .footer-note {
-      margin-top: 28px;
+      margin-top: 32px;
       color: var(--muted);
       font-size: 13px;
-      line-height: 1.5;
+      line-height: 1.6;
+      padding-top: 20px;
+      border-top: 1px solid var(--border-soft);
     }
 
+    /* ─── RESPONSIVE ─── */
     @media (max-width: 900px) {
-      .grid {
-        grid-template-columns: repeat(2, 1fr);
-      }
-
-      .controls {
-        grid-template-columns: 1fr;
-      }
-
-      .ride-card {
-        grid-template-columns: 1fr 1fr;
-      }
-
-      .header-inner {
-        align-items: flex-start;
-        flex-direction: column;
-      }
-
-      .top-actions {
-        width: 100%;
-        justify-content: flex-start;
-      }
+      .stat-grid { grid-template-columns: repeat(3, 1fr); }
+      .controls { grid-template-columns: 1fr; }
+      .ride-card { grid-template-columns: 1fr 1fr; }
+      .header-inner { flex-wrap: wrap; height: auto; padding: 14px 20px; }
+      .top-actions { width: 100%; }
     }
 
     @media (max-width: 700px) {
-      .chart-header {
-        align-items: stretch;
-        flex-direction: column;
-      }
-
-      .chart-control {
-        width: 100%;
-      }
-
-      .chart-wrap {
-        height: 280px;
-      }
+      .chart-header { flex-direction: column; }
+      .chart-control { width: 100%; }
+      .chart-wrap { height: 260px; }
+      .stat-grid { grid-template-columns: repeat(2, 1fr); }
     }
 
     @media (max-width: 520px) {
-      h1 {
-        font-size: 21px;
-      }
-
-      main {
-        padding: 20px 14px 50px;
-      }
-
-      .card {
-        border-radius: 20px;
-        padding: 18px;
-      }
-
-      .grid {
-        grid-template-columns: 1fr;
-      }
-
-      .ride-card {
-        grid-template-columns: 1fr;
-      }
-
-      .button-row button,
-      .top-actions button {
-        width: 100%;
-      }
-
-      .email-pill {
-        width: 100%;
-      }
+      main { padding: 20px 16px 60px; }
+      .card { padding: 20px; border-radius: 18px; }
+      .login-card { padding: 28px 22px; }
+      .stat-grid { grid-template-columns: 1fr; }
+      .ride-card { grid-template-columns: 1fr; }
+      .button-row button, .top-actions button { width: 100%; }
+      .email-pill { max-width: 100%; }
     }
   </style>
 </head>
@@ -431,57 +540,62 @@
     <div class="header-inner">
       <div class="brand">
         <div class="logo">
-  <img src="assets/icon.png" alt="Bike Ride Green icon">
-</div>
-          <h1>Bike Ride Green Portal</h1>
-          <div class="subtitle">Private ride summaries for training, family, friends, and cycling clubs.</div>
+          <img src="assets/icon.png" alt="Bike Ride Green icon">
+        </div>
+        <div class="brand-text">
+          <h1>Bike Ride Green</h1>
+          <div class="subtitle">Private ride portal</div>
         </div>
       </div>
 
       <div id="signedInActions" class="top-actions hidden">
         <div id="userEmail" class="email-pill"></div>
-        <button class="btn-secondary" onclick="loadRides()">Refresh</button>
-        <button class="btn-secondary" onclick="signOut()">Sign Out</button>
+        <button class="btn-ghost" onclick="loadRides()">Refresh</button>
+        <button class="btn-danger-soft" onclick="signOut()">Sign out</button>
       </div>
     </div>
   </header>
 
   <main>
-    <section id="loginSection" class="card login-card">
-      <h2>Sign in</h2>
-      <p class="helper">
-        Use the same email and password you created in the Bike Ride Green app.
-      </p>
+    <!-- LOGIN -->
+    <section id="loginSection" class="login-wrap">
+      <div class="login-card">
+        <div class="login-eyebrow">Secure access</div>
+        <h2>Sign in to your portal</h2>
+        <p class="helper">Use the same email and password from the Bike Ride Green app.</p>
 
-      <div class="field">
-        <label for="email">Email</label>
-        <input id="email" type="email" autocomplete="email" placeholder="you@example.com" />
+        <div class="field">
+          <label for="email">Email</label>
+          <input id="email" type="email" autocomplete="email" placeholder="you@example.com" />
+        </div>
+
+        <div class="field">
+          <label for="password">Password</label>
+          <input id="password" type="password" autocomplete="current-password" placeholder="••••••••" />
+        </div>
+
+        <div class="button-row">
+          <button id="loginButton" class="btn-primary" onclick="signIn()">Sign in</button>
+          <button class="btn-ghost" onclick="checkSession()">Check session</button>
+        </div>
+
+        <div id="loginStatus" class="status"></div>
       </div>
-
-      <div class="field">
-        <label for="password">Password</label>
-        <input id="password" type="password" autocomplete="current-password" placeholder="Password" />
-      </div>
-
-      <div class="button-row">
-        <button id="loginButton" onclick="signIn()">Sign In</button>
-        <button class="btn-secondary" onclick="checkSession()">Check Session</button>
-      </div>
-
-      <div id="loginStatus" class="status"></div>
     </section>
 
+    <!-- DASHBOARD -->
     <section id="dashboardSection" class="hidden">
       <div class="card">
-        <h2 class="section-title">My Ride Dashboard</h2>
-        <p class="helper">
-          These are your uploaded ride summaries from the Bike Ride Green app. Route maps are not uploaded yet.
-        </p>
+        <div class="dash-header">
+          <h2>My ride dashboard</h2>
+          <p class="dash-helper">Uploaded summaries from the Bike Ride Green app. Route maps coming soon.</p>
+        </div>
 
-        <div class="grid">
+        <!-- STATS -->
+        <div class="stat-grid">
           <div class="stat">
-            <div class="stat-label">Total rides</div>
-            <div id="statRides" class="stat-value">0</div>
+            <div class="stat-label">Rides</div>
+            <div id="statRides" class="stat-value accent">0</div>
           </div>
           <div class="stat">
             <div class="stat-label">Distance</div>
@@ -501,12 +615,18 @@
           </div>
           <div class="stat">
             <div class="stat-label">Best benchmark</div>
-            <div id="statBenchmark" class="stat-value">0%</div>
+            <div id="statBenchmark" class="stat-value accent">0%</div>
           </div>
         </div>
 
+        <hr class="section-divider" />
+
+        <!-- CONTROLS -->
         <div class="controls">
-          <input id="searchInput" type="search" placeholder="Search by date or unit..." oninput="renderRides()" />
+          <div class="search-wrap">
+            <span class="search-icon">🔍</span>
+            <input id="searchInput" type="search" placeholder="Search by date or unit…" oninput="renderRides()" />
+          </div>
 
           <select id="yearFilter" onchange="renderRides()">
             <option value="">All years</option>
@@ -529,13 +649,13 @@
           </select>
         </div>
 
+        <!-- CHART -->
         <div class="chart-card">
           <div class="chart-header">
             <div>
-              <div class="chart-title">Performance Chart</div>
-              <div id="chartSubtitle" class="chart-subtitle">Chart follows the selected year and month filters.</div>
+              <div class="chart-title">Performance chart</div>
+              <div id="chartSubtitle" class="chart-subtitle">Follows the year and month filters above.</div>
             </div>
-
             <select id="chartMetric" class="chart-control" onchange="renderRides()">
               <option value="distance">Distance</option>
               <option value="duration">Time</option>
@@ -545,17 +665,17 @@
               <option value="calories">Calories</option>
             </select>
           </div>
-
           <div class="chart-wrap">
             <canvas id="rideChart"></canvas>
           </div>
         </div>
 
+        <!-- RIDES -->
         <div id="ridesList" class="rides-list"></div>
 
-        <div class="footer-note">
+        <p class="footer-note">
           Manual GPX route upload and map display can be added next. For now, this portal shows private ride summaries only.
-        </div>
+        </p>
       </div>
     </section>
   </main>
@@ -578,47 +698,24 @@
 
     async function checkSession() {
       const { data, error } = await client.auth.getSession();
-
-      if (error) {
-        showLoginStatus(error.message);
-        return;
-      }
-
+      if (error) { showLoginStatus(error.message); return; }
       const session = data.session;
-
       if (session && session.user) {
         currentUser = session.user;
         showDashboard(session.user);
         await loadRides();
-      } else {
-        showLogin();
-      }
+      } else { showLogin(); }
     }
 
     async function signIn() {
       const email = document.getElementById("email").value.trim();
       const password = document.getElementById("password").value;
-
-      if (!email || !password) {
-        showLoginStatus("Please enter your email and password.");
-        return;
-      }
-
+      if (!email || !password) { showLoginStatus("Please enter your email and password."); return; }
       setLoginLoading(true);
       showLoginStatus("");
-
-      const { data, error } = await client.auth.signInWithPassword({
-        email,
-        password
-      });
-
+      const { data, error } = await client.auth.signInWithPassword({ email, password });
       setLoginLoading(false);
-
-      if (error) {
-        showLoginStatus(error.message);
-        return;
-      }
-
+      if (error) { showLoginStatus(error.message); return; }
       currentUser = data.user;
       showDashboard(data.user);
       await loadRides();
@@ -626,32 +723,23 @@
 
     async function signOut() {
       await client.auth.signOut();
-      currentUser = null;
-      allRides = [];
-
-      if (rideChart) {
-        rideChart.destroy();
-        rideChart = null;
-      }
-
+      currentUser = null; allRides = [];
+      if (rideChart) { rideChart.destroy(); rideChart = null; }
       showLogin();
     }
 
     async function loadRides() {
       if (!currentUser) return;
-
       const { data, error } = await client
         .from("rides")
         .select("*")
         .eq("user_id", currentUser.id)
         .order("ride_date", { ascending: false });
-
       if (error) {
         document.getElementById("ridesList").innerHTML =
           `<div class="empty">Could not load rides: ${escapeHtml(error.message)}</div>`;
         return;
       }
-
       allRides = data || [];
       populateYearFilter();
       renderRides();
@@ -664,37 +752,17 @@
       const month = document.getElementById("monthFilter").value;
 
       let rides = [...allRides];
-
-      if (year) {
-        rides = rides.filter(ride => (ride.ride_day || "").slice(0, 4) === year);
-      }
-
-      if (month) {
-        rides = rides.filter(ride => (ride.ride_day || "").slice(5, 7) === month);
-      }
-
-      if (search) {
-        rides = rides.filter(ride => {
-          const combined = [
-            ride.ride_day,
-            ride.distance_unit,
-            ride.speed_unit,
-            ride.elevation_unit,
-            ride.display_unit_system
-          ].join(" ").toLowerCase();
-
-          return combined.includes(search);
-        });
-      }
+      if (year) rides = rides.filter(r => (r.ride_day || "").slice(0, 4) === year);
+      if (month) rides = rides.filter(r => (r.ride_day || "").slice(5, 7) === month);
+      if (search) rides = rides.filter(r => {
+        const combined = [r.ride_day, r.distance_unit, r.speed_unit, r.elevation_unit, r.display_unit_system].join(" ").toLowerCase();
+        return combined.includes(search);
+      });
 
       updateStats(rides);
       updateRideChart(rides);
 
-      if (!rides.length) {
-        ridesList.innerHTML = `<div class="empty">No rides found.</div>`;
-        return;
-      }
-
+      if (!rides.length) { ridesList.innerHTML = `<div class="empty">No rides found.</div>`; return; }
       ridesList.innerHTML = rides.map(ride => rideCardHTML(ride)).join("");
     }
 
@@ -711,31 +779,26 @@
         <article class="ride-card">
           <div>
             <div class="ride-date">${escapeHtml(date)}</div>
-            <div class="ride-small">Ride ID: ${escapeHtml(shortId(ride.local_ride_id || ride.id))}</div>
+            <div class="ride-small">ID: ${escapeHtml(shortId(ride.local_ride_id || ride.id))}</div>
           </div>
-
           <div>
             <div class="metric-label">Benchmark</div>
-            <div class="metric-value benchmark">${formatNumber(benchmark, 1)}%</div>
+            <div class="metric-value green">${formatNumber(benchmark, 1)}%</div>
           </div>
-
           <div>
             <div class="metric-label">Distance</div>
             <div class="metric-value">${formatNumber(distance, 2)} ${escapeHtml(ride.distance_unit || "")}</div>
           </div>
-
           <div>
             <div class="metric-label">Avg speed</div>
             <div class="metric-value">${formatNumber(avgSpeed, 1)} ${escapeHtml(speedUnitLabel(ride.speed_unit))}</div>
           </div>
-
           <div>
             <div class="metric-label">Elevation</div>
             <div class="metric-value">${formatNumber(elevation, 0)} ${escapeHtml(ride.elevation_unit || "")}</div>
           </div>
-
           <div>
-            <div class="metric-label">Calories / duration</div>
+            <div class="metric-label">Calories</div>
             <div class="metric-value">${escapeHtml(String(calories))} kcal</div>
             <div class="ride-small">${escapeHtml(duration)}</div>
           </div>
@@ -744,17 +807,15 @@
     }
 
     function updateStats(rides) {
-      const totalRides = rides.length;
       const distance = sum(rides, "distance_value");
-      const calories = rides.reduce((total, ride) => total + (Number(ride.calories) || 0), 0);
+      const calories = rides.reduce((t, r) => t + (Number(r.calories) || 0), 0);
       const elevation = sum(rides, "elevation_gain_value");
-      const durationSeconds = rides.reduce((total, ride) => total + (Number(ride.duration_seconds) || 0), 0);
-      const bestBenchmark = rides.reduce((best, ride) => Math.max(best, Number(ride.personal_benchmark) || 0), 0);
-
+      const durationSeconds = rides.reduce((t, r) => t + (Number(r.duration_seconds) || 0), 0);
+      const bestBenchmark = rides.reduce((b, r) => Math.max(b, Number(r.personal_benchmark) || 0), 0);
       const distanceUnit = rides[0]?.distance_unit || "";
       const elevationUnit = rides[0]?.elevation_unit || "";
 
-      document.getElementById("statRides").textContent = totalRides;
+      document.getElementById("statRides").textContent = rides.length;
       document.getElementById("statDistance").textContent = `${formatNumber(distance, 1)} ${distanceUnit}`;
       document.getElementById("statCalories").textContent = `${Math.round(calories)} kcal`;
       document.getElementById("statElevation").textContent = `${formatNumber(elevation, 0)} ${elevationUnit}`;
@@ -765,25 +826,20 @@
     function updateRideChart(rides) {
       const canvas = document.getElementById("rideChart");
       const chartSubtitle = document.getElementById("chartSubtitle");
-
       if (!canvas) return;
 
       const metric = document.getElementById("chartMetric").value;
       const year = document.getElementById("yearFilter").value;
       const month = document.getElementById("monthFilter").value;
-
       const chartData = buildChartData(rides, metric, Boolean(month));
       const metricInfo = chartMetricInfo(metric, rides);
 
       chartSubtitle.textContent = month
-        ? "Daily ride values for the selected month."
-        : year
-          ? "Monthly values for the selected year."
-          : "Monthly values across all uploaded rides.";
+        ? "Daily values for the selected month."
+        : year ? "Monthly values for the selected year."
+        : "Monthly values across all uploaded rides.";
 
-      if (rideChart) {
-        rideChart.destroy();
-      }
+      if (rideChart) rideChart.destroy();
 
       rideChart = new Chart(canvas, {
         type: "bar",
@@ -792,10 +848,10 @@
           datasets: [{
             label: metricInfo.label,
             data: chartData.values,
-            borderWidth: 1,
-            borderRadius: 8,
-            backgroundColor: "rgba(46, 204, 113, 0.70)",
-            borderColor: "rgba(134, 239, 172, 1)"
+            borderWidth: 0,
+            borderRadius: 6,
+            backgroundColor: "rgba(34,197,94,0.55)",
+            hoverBackgroundColor: "rgba(74,222,128,0.75)"
           }]
         },
         options: {
@@ -804,40 +860,39 @@
           plugins: {
             legend: {
               labels: {
-                color: "#f9fafb",
-                font: {
-                  weight: "700"
-                }
+                color: "#9ca3af",
+                font: { size: 13, weight: "600" },
+                boxWidth: 10,
+                boxHeight: 10,
+                borderRadius: 3
               }
             },
             tooltip: {
+              backgroundColor: "rgba(13,22,16,0.92)",
+              titleColor: "#f0fdf4",
+              bodyColor: "#9ca3af",
+              borderColor: "rgba(34,197,94,0.25)",
+              borderWidth: 1,
+              padding: 12,
+              cornerRadius: 10,
               callbacks: {
-                label: function(context) {
-                  return `${metricInfo.label}: ${formatNumber(context.raw, metricInfo.decimals)} ${metricInfo.unit}`;
-                }
+                label: ctx => `${metricInfo.label}: ${formatNumber(ctx.raw, metricInfo.decimals)} ${metricInfo.unit}`
               }
             }
           },
           scales: {
             x: {
-              ticks: {
-                color: "#d1d5db"
-              },
-              grid: {
-                color: "rgba(255,255,255,0.08)"
-              }
+              ticks: { color: "#6b7280", font: { size: 12 } },
+              grid: { color: "rgba(255,255,255,0.05)", drawBorder: false }
             },
             y: {
               beginAtZero: true,
               ticks: {
-                color: "#d1d5db",
-                callback: function(value) {
-                  return `${value}${metricInfo.shortUnit}`;
-                }
+                color: "#6b7280",
+                font: { size: 12 },
+                callback: v => `${v}${metricInfo.shortUnit}`
               },
-              grid: {
-                color: "rgba(255,255,255,0.08)"
-              }
+              grid: { color: "rgba(255,255,255,0.05)", drawBorder: false }
             }
           }
         }
@@ -846,174 +901,64 @@
 
     function buildChartData(rides, metric, showDays) {
       const groups = {};
-
       rides.forEach(ride => {
-        const key = showDays
-          ? (ride.ride_day || "").slice(0, 10)
-          : (ride.ride_day || "").slice(0, 7);
-
+        const key = showDays ? (ride.ride_day || "").slice(0, 10) : (ride.ride_day || "").slice(0, 7);
         if (!key) return;
-
-        if (!groups[key]) {
-          groups[key] = [];
-        }
-
+        if (!groups[key]) groups[key] = [];
         groups[key].push(ride);
       });
-
       const keys = Object.keys(groups).sort();
-
       return {
-        labels: keys.map(key => showDays ? formatChartDay(key) : formatChartMonth(key)),
-        values: keys.map(key => chartGroupValue(groups[key], metric))
+        labels: keys.map(k => showDays ? formatChartDay(k) : formatChartMonth(k)),
+        values: keys.map(k => chartGroupValue(groups[k], metric))
       };
     }
 
     function chartGroupValue(rides, metric) {
       if (!rides.length) return 0;
-
-      if (metric === "distance") {
-        return sum(rides, "distance_value");
-      }
-
-      if (metric === "duration") {
-        const seconds = rides.reduce((total, ride) => total + (Number(ride.duration_seconds) || 0), 0);
-        return seconds / 3600;
-      }
-
-      if (metric === "benchmark") {
-        return average(rides, "personal_benchmark");
-      }
-
-      if (metric === "speed") {
-        return average(rides, "average_speed_value");
-      }
-
-      if (metric === "elevation") {
-        return sum(rides, "elevation_gain_value");
-      }
-
-      if (metric === "calories") {
-        return rides.reduce((total, ride) => total + (Number(ride.calories) || 0), 0);
-      }
-
+      if (metric === "distance") return sum(rides, "distance_value");
+      if (metric === "duration") return rides.reduce((t, r) => t + (Number(r.duration_seconds) || 0), 0) / 3600;
+      if (metric === "benchmark") return average(rides, "personal_benchmark");
+      if (metric === "speed") return average(rides, "average_speed_value");
+      if (metric === "elevation") return sum(rides, "elevation_gain_value");
+      if (metric === "calories") return rides.reduce((t, r) => t + (Number(r.calories) || 0), 0);
       return 0;
     }
 
     function chartMetricInfo(metric, rides) {
-      const firstRide = rides[0] || {};
-
-      if (metric === "distance") {
-        return {
-          label: "Distance",
-          unit: firstRide.distance_unit || "",
-          shortUnit: firstRide.distance_unit ? ` ${firstRide.distance_unit}` : "",
-          decimals: 1
-        };
-      }
-
-      if (metric === "duration") {
-        return {
-          label: "Time",
-          unit: "hours",
-          shortUnit: "h",
-          decimals: 1
-        };
-      }
-
-      if (metric === "benchmark") {
-        return {
-          label: "Benchmark",
-          unit: "%",
-          shortUnit: "%",
-          decimals: 1
-        };
-      }
-
-      if (metric === "speed") {
-        return {
-          label: "Average speed",
-          unit: speedUnitLabel(firstRide.speed_unit),
-          shortUnit: firstRide.speed_unit === "kmh" ? " km/h" : firstRide.speed_unit ? ` ${firstRide.speed_unit}` : "",
-          decimals: 1
-        };
-      }
-
-      if (metric === "elevation") {
-        return {
-          label: "Elevation",
-          unit: firstRide.elevation_unit || "",
-          shortUnit: firstRide.elevation_unit ? ` ${firstRide.elevation_unit}` : "",
-          decimals: 0
-        };
-      }
-
-      if (metric === "calories") {
-        return {
-          label: "Calories",
-          unit: "kcal",
-          shortUnit: " kcal",
-          decimals: 0
-        };
-      }
-
-      return {
-        label: "Value",
-        unit: "",
-        shortUnit: "",
-        decimals: 1
-      };
+      const f = rides[0] || {};
+      if (metric === "distance") return { label: "Distance", unit: f.distance_unit || "", shortUnit: f.distance_unit ? ` ${f.distance_unit}` : "", decimals: 1 };
+      if (metric === "duration") return { label: "Time", unit: "hours", shortUnit: "h", decimals: 1 };
+      if (metric === "benchmark") return { label: "Benchmark", unit: "%", shortUnit: "%", decimals: 1 };
+      if (metric === "speed") return { label: "Average speed", unit: speedUnitLabel(f.speed_unit), shortUnit: f.speed_unit === "kmh" ? " km/h" : f.speed_unit ? ` ${f.speed_unit}` : "", decimals: 1 };
+      if (metric === "elevation") return { label: "Elevation", unit: f.elevation_unit || "", shortUnit: f.elevation_unit ? ` ${f.elevation_unit}` : "", decimals: 0 };
+      if (metric === "calories") return { label: "Calories", unit: "kcal", shortUnit: " kcal", decimals: 0 };
+      return { label: "Value", unit: "", shortUnit: "", decimals: 1 };
     }
 
     function average(rows, key) {
       if (!rows.length) return 0;
-
-      const total = rows.reduce((sum, row) => sum + (Number(row[key]) || 0), 0);
-      return total / rows.length;
+      return rows.reduce((s, r) => s + (Number(r[key]) || 0), 0) / rows.length;
     }
 
     function formatChartDay(value) {
       const date = new Date(value);
-
-      if (Number.isNaN(date.getTime())) {
-        return value;
-      }
-
-      return date.toLocaleDateString(undefined, {
-        month: "short",
-        day: "numeric"
-      });
+      if (Number.isNaN(date.getTime())) return value;
+      return date.toLocaleDateString(undefined, { month: "short", day: "numeric" });
     }
 
     function formatChartMonth(value) {
       const date = new Date(`${value}-01T00:00:00`);
-
-      if (Number.isNaN(date.getTime())) {
-        return value;
-      }
-
-      return date.toLocaleDateString(undefined, {
-        month: "short",
-        year: "numeric"
-      });
+      if (Number.isNaN(date.getTime())) return value;
+      return date.toLocaleDateString(undefined, { month: "short", year: "numeric" });
     }
 
     function populateYearFilter() {
       const yearFilter = document.getElementById("yearFilter");
       const existing = yearFilter.value;
-
-      const years = Array.from(new Set(
-        allRides
-          .map(ride => (ride.ride_day || "").slice(0, 4))
-          .filter(Boolean)
-      )).sort().reverse();
-
-      yearFilter.innerHTML = `<option value="">All years</option>` +
-        years.map(year => `<option value="${year}">${year}</option>`).join("");
-
-      if (years.includes(existing)) {
-        yearFilter.value = existing;
-      }
+      const years = Array.from(new Set(allRides.map(r => (r.ride_day || "").slice(0, 4)).filter(Boolean))).sort().reverse();
+      yearFilter.innerHTML = `<option value="">All years</option>` + years.map(y => `<option value="${y}">${y}</option>`).join("");
+      if (years.includes(existing)) yearFilter.value = existing;
     }
 
     function showDashboard(user) {
@@ -1031,78 +976,41 @@
       showLoginStatus("");
     }
 
-    function setLoginLoading(isLoading) {
-      const button = document.getElementById("loginButton");
-      button.disabled = isLoading;
-      button.textContent = isLoading ? "Signing in..." : "Sign In";
+    function setLoginLoading(loading) {
+      const btn = document.getElementById("loginButton");
+      btn.disabled = loading;
+      btn.textContent = loading ? "Signing in…" : "Sign in";
     }
 
-    function showLoginStatus(message) {
-      loginStatus.textContent = message || "";
-    }
+    function showLoginStatus(msg) { loginStatus.textContent = msg || ""; }
 
-    function sum(rows, key) {
-      return rows.reduce((total, row) => total + (Number(row[key]) || 0), 0);
-    }
-
-    function safeNumber(value) {
-      const number = Number(value);
-      return Number.isFinite(number) ? number : 0;
-    }
-
-    function formatNumber(value, decimals) {
-      return safeNumber(value).toLocaleString(undefined, {
-        minimumFractionDigits: decimals,
-        maximumFractionDigits: decimals
-      });
-    }
+    function sum(rows, key) { return rows.reduce((t, r) => t + (Number(r[key]) || 0), 0); }
+    function safeNumber(v) { const n = Number(v); return Number.isFinite(n) ? n : 0; }
+    function formatNumber(v, d) { return safeNumber(v).toLocaleString(undefined, { minimumFractionDigits: d, maximumFractionDigits: d }); }
 
     function formatDuration(totalSeconds) {
       totalSeconds = Math.max(0, Number(totalSeconds) || 0);
-
       const hours = Math.floor(totalSeconds / 3600);
       const minutes = Math.floor((totalSeconds % 3600) / 60);
       const seconds = Math.floor(totalSeconds % 60);
-
-      if (hours > 0) {
-        return `${hours}h ${String(minutes).padStart(2, "0")}m`;
-      }
-
+      if (hours > 0) return `${hours}h ${String(minutes).padStart(2, "0")}m`;
       return `${minutes}m ${String(seconds).padStart(2, "0")}s`;
     }
 
     function formatDate(value) {
       if (!value) return "Unknown date";
-
       const date = new Date(value);
-
-      if (Number.isNaN(date.getTime())) {
-        return value;
-      }
-
-      return date.toLocaleDateString(undefined, {
-        year: "numeric",
-        month: "short",
-        day: "numeric"
-      });
+      if (Number.isNaN(date.getTime())) return value;
+      return date.toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
     }
 
-    function speedUnitLabel(unit) {
-      if (unit === "kmh") return "km/h";
-      return unit || "";
-    }
-
-    function shortId(id) {
-      if (!id) return "—";
-      return String(id).slice(0, 6);
-    }
+    function speedUnitLabel(unit) { if (unit === "kmh") return "km/h"; return unit || ""; }
+    function shortId(id) { if (!id) return "—"; return String(id).slice(0, 6); }
 
     function escapeHtml(value) {
       return String(value ?? "")
-        .replaceAll("&", "&amp;")
-        .replaceAll("<", "&lt;")
-        .replaceAll(">", "&gt;")
-        .replaceAll('"', "&quot;")
+        .replaceAll("&", "&amp;").replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;").replaceAll('"', "&quot;")
         .replaceAll("'", "&#039;");
     }
 
@@ -1114,14 +1022,8 @@
         showDashboard(session.user);
         loadRides();
       } else {
-        currentUser = null;
-        allRides = [];
-
-        if (rideChart) {
-          rideChart.destroy();
-          rideChart = null;
-        }
-
+        currentUser = null; allRides = [];
+        if (rideChart) { rideChart.destroy(); rideChart = null; }
         showLogin();
       }
     });
