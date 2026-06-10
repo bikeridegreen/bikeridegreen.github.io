@@ -847,7 +847,7 @@
 
           <div class="field">
             <label for="displayNameInput">Display name</label>
-            <input id="displayNameInput" type="text" maxlength="40" placeholder="Example: Gabriel" />
+           <input id="displayNameInput" type="text" maxlength="40" placeholder="Name or nickname" />
           </div>
 
           <div class="settings-actions">
@@ -1293,70 +1293,93 @@
     }
 
     async function loadGroups() {
-      if (!currentUser) return;
+  if (!currentUser) return;
 
-      const { data, error } = await client
-        .from("ride_groups")
-        .select("id, name, group_type, description, created_at")
-        .eq("owner_id", currentUser.id)
-        .order("created_at", { ascending: false });
+  const { data, error } = await client
+    .from("ride_group_members")
+    .select(`
+      role,
+      ride_groups (
+        id,
+        name,
+        group_type,
+        description,
+        created_at,
+        owner_id
+      )
+    `)
+    .eq("user_id", currentUser.id)
+    .order("created_at", { ascending: false, referencedTable: "ride_groups" });
 
-      if (error) {
-        console.error("Could not load groups:", error.message);
+  if (error) {
+    console.error("Could not load groups:", error.message);
 
-        const section = document.getElementById("groupsSection");
-        const list = document.getElementById("myGroupsList");
+    const section = document.getElementById("groupsSection");
+    const list = document.getElementById("myGroupsList");
 
-        if (section) section.classList.remove("hidden");
-        if (list) {
-          list.innerHTML = `<div class="empty">Could not load groups: ${escapeHtml(error.message)}</div>`;
-        }
-
-        return;
-      }
-
-      allGroups = data || [];
-      renderGroups();
+    if (section) section.classList.remove("hidden");
+    if (list) {
+      list.innerHTML = `<div class="empty">Could not load groups: ${escapeHtml(error.message)}</div>`;
     }
+
+    return;
+  }
+
+  allGroups = (data || [])
+    .filter(row => row.ride_groups)
+    .map(row => ({
+      ...row.ride_groups,
+      role: row.role
+    }));
+
+  renderGroups();
+}
 
     function renderGroups() {
-      const section = document.getElementById("groupsSection");
-      const list = document.getElementById("myGroupsList");
+  const section = document.getElementById("groupsSection");
+  const list = document.getElementById("myGroupsList");
 
-      if (!section || !list) return;
+  if (!section || !list) return;
 
-      if (!allGroups.length) {
-        section.classList.add("hidden");
-        list.innerHTML = "";
-        return;
-      }
+  if (!allGroups.length) {
+    section.classList.add("hidden");
+    list.innerHTML = "";
+    return;
+  }
 
-      section.classList.remove("hidden");
+  section.classList.remove("hidden");
 
-      list.innerHTML = allGroups.map(group => {
-        return `
-          <article class="group-card">
-            <div>
-              <div class="group-title">${escapeHtml(group.name)}</div>
-              <div class="group-meta">
-                ${escapeHtml(groupTypeLabel(group.group_type))} • owner
-              </div>
-              ${
-                group.description
-                  ? `<div class="group-meta">${escapeHtml(group.description)}</div>`
-                  : ""
-              }
-            </div>
+  list.innerHTML = allGroups.map(group => {
+    const role = group.role || "member";
+    const canInvite = role === "owner";
 
-            <div class="group-actions">
-              <button class="btn-ghost" onclick="createGroupInvite('${escapeHtml(group.id)}')">
-                Create invite
-              </button>
-            </div>
-          </article>
-        `;
-      }).join("");
-    }
+    return `
+      <article class="group-card">
+        <div>
+          <div class="group-title">${escapeHtml(group.name)}</div>
+          <div class="group-meta">
+            ${escapeHtml(groupTypeLabel(group.group_type))} • ${escapeHtml(role)}
+          </div>
+          ${
+            group.description
+              ? `<div class="group-meta">${escapeHtml(group.description)}</div>`
+              : ""
+          }
+        </div>
+
+        <div class="group-actions">
+          ${
+            canInvite
+              ? `<button class="btn-ghost" onclick="createGroupInvite('${escapeHtml(group.id)}')">
+                  Create invite
+                </button>`
+              : `<button class="btn-ghost" disabled>Joined</button>`
+          }
+        </div>
+      </article>
+    `;
+  }).join("");
+}
 
     function groupTypeLabel(type) {
       if (type === "club") return "Club";
