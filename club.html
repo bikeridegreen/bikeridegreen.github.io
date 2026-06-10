@@ -1,1 +1,1064 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
+  <title>Bike Ride Green Club</title>
+  <meta name="description" content="Bike Ride Green private club dashboard." />
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --green: #22c55e;
+      --green-light: #4ade80;
+      --green-dim: #16a34a;
+      --bg: #0b2414;
+      --card: #112918;
+      --border: rgba(34,197,94,0.14);
+      --border-soft: rgba(255,255,255,0.07);
+      --text: #f0fdf4;
+      --muted: #8a958f;
+      --muted-2: #9ca3af;
+      --danger: #ef4444;
+    }
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background:
+        radial-gradient(circle at top left, rgba(74,222,128,0.18), transparent 34%),
+        radial-gradient(circle at bottom right, rgba(34,197,94,0.16), transparent 42%),
+        linear-gradient(180deg, #0a2414 0%, #10351f 48%, #092817 100%);
+      color: var(--text);
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 70% 45% at 15% -10%, rgba(74,222,128,0.20) 0%, transparent 65%),
+        radial-gradient(ellipse 55% 35% at 85% 105%, rgba(22,163,74,0.18) 0%, transparent 62%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      border-bottom: 1px solid rgba(34,197,94,0.20);
+      background: rgba(8,31,17,0.84);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+    }
+
+    .header-inner {
+      max-width: 1120px;
+      margin: 0 auto;
+      padding: 0 24px;
+      height: 68px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .logo {
+      width: 42px;
+      height: 42px;
+      border-radius: 12px;
+      overflow: hidden;
+      flex-shrink: 0;
+      border: 1px solid rgba(34,197,94,0.3);
+      background: #0d1f10;
+    }
+
+    .logo img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .brand-text h1 {
+      font-size: 17px;
+      font-weight: 700;
+      margin: 0;
+      letter-spacing: -0.3px;
+    }
+
+    .brand-text .subtitle {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+
+    .top-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .user-pill {
+      font-size: 13px;
+      color: var(--green-light);
+      background: rgba(34,197,94,0.08);
+      border: 1px solid rgba(34,197,94,0.22);
+      border-radius: 999px;
+      padding: 7px 14px;
+      max-width: 220px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    main {
+      max-width: 1120px;
+      margin: 0 auto;
+      padding: 36px 24px 80px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    button {
+      border: 0;
+      cursor: pointer;
+      font-family: inherit;
+      font-weight: 600;
+      font-size: 14px;
+      border-radius: 999px;
+      padding: 9px 18px;
+      transition: all 0.15s ease;
+      color: #fff;
+      white-space: nowrap;
+    }
+
+    button:hover {
+      transform: translateY(-1px);
+    }
+
+    .btn-primary {
+      background: var(--green-dim);
+      box-shadow: 0 0 0 1px rgba(34,197,94,0.4), 0 4px 16px rgba(34,197,94,0.18);
+    }
+
+    .btn-primary:hover {
+      background: var(--green);
+    }
+
+    .btn-ghost {
+      background: transparent;
+      color: var(--muted-2);
+      border: 1px solid var(--border-soft);
+    }
+
+    .btn-ghost:hover {
+      background: rgba(255,255,255,0.06);
+      color: var(--text);
+    }
+
+    .btn-danger-soft {
+      background: rgba(239,68,68,0.1);
+      color: #fca5a5;
+      border: 1px solid rgba(239,68,68,0.25);
+    }
+
+    .card {
+      background: linear-gradient(180deg, rgba(17,41,24,0.96), rgba(12,32,18,0.96));
+      border: 1px solid rgba(34,197,94,0.22);
+      border-radius: 20px;
+      padding: 28px;
+      box-shadow: 0 18px 60px rgba(0,0,0,0.22);
+    }
+
+    .login-wrap {
+      min-height: calc(100vh - 120px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .login-card {
+      width: 100%;
+      max-width: 440px;
+      background: linear-gradient(180deg, rgba(17,41,24,0.96), rgba(12,32,18,0.96));
+      border: 1px solid rgba(34,197,94,0.22);
+      border-radius: 24px;
+      padding: 40px;
+      box-shadow: 0 18px 60px rgba(0,0,0,0.22);
+    }
+
+    .login-eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--green-light);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-bottom: 14px;
+    }
+
+    .login-eyebrow::before {
+      content: '';
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--green);
+      box-shadow: 0 0 8px var(--green);
+    }
+
+    .login-card h2 {
+      font-size: 26px;
+      font-weight: 800;
+      margin: 0 0 8px;
+    }
+
+    .helper {
+      color: var(--muted-2);
+      font-size: 14px;
+      line-height: 1.6;
+      margin: 0 0 28px;
+    }
+
+    .field {
+      margin-bottom: 16px;
+    }
+
+    label {
+      display: block;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      color: var(--muted-2);
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+
+    input {
+      width: 100%;
+      padding: 13px 16px;
+      border-radius: 12px;
+      border: 1px solid var(--border-soft);
+      background: rgba(255,255,255,0.04);
+      color: var(--text);
+      font-size: 15px;
+      font-family: inherit;
+      outline: none;
+    }
+
+    input:focus {
+      border-color: rgba(34,197,94,0.5);
+      box-shadow: 0 0 0 3px rgba(34,197,94,0.1);
+    }
+
+    .button-row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 6px;
+    }
+
+    .status {
+      margin-top: 14px;
+      font-size: 14px;
+      color: #fca5a5;
+      min-height: 20px;
+    }
+
+    .dash-header {
+      margin-bottom: 24px;
+    }
+
+    .dash-header h2 {
+      font-size: 32px;
+      font-weight: 800;
+      margin: 0 0 6px;
+      letter-spacing: -0.6px;
+    }
+
+    .dash-helper {
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    .section-divider {
+      border: 0;
+      border-top: 1px solid var(--border-soft);
+      margin: 28px 0 24px;
+    }
+
+    .stat-grid {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 12px;
+      margin: 24px 0;
+    }
+
+    .stat {
+      background: rgba(34,197,94,0.04);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 18px 16px;
+    }
+
+    .stat-label {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 10px;
+    }
+
+    .stat-value {
+      font-size: 22px;
+      font-weight: 800;
+      color: var(--text);
+      letter-spacing: -0.5px;
+      line-height: 1.1;
+    }
+
+    .stat-value.accent {
+      color: var(--green-light);
+    }
+
+    .members-list {
+      display: grid;
+      gap: 12px;
+    }
+
+    .member-card {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid var(--border-soft);
+      border-radius: 18px;
+      padding: 20px;
+    }
+
+    .member-top {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      align-items: flex-start;
+    }
+
+    .member-name {
+      font-size: 18px;
+      font-weight: 800;
+      margin-bottom: 4px;
+    }
+
+    .member-meta {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .member-stats {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 10px;
+      margin-top: 18px;
+    }
+
+    .mini-stat {
+      border: 1px solid var(--border-soft);
+      border-radius: 14px;
+      padding: 12px;
+      background: rgba(255,255,255,0.025);
+    }
+
+    .mini-label {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+
+    .mini-value {
+      font-size: 15px;
+      font-weight: 800;
+    }
+
+    .rides-list {
+      display: grid;
+      gap: 10px;
+      margin-top: 16px;
+      padding-top: 14px;
+      border-top: 1px solid var(--border-soft);
+    }
+
+    .ride-card {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid var(--border-soft);
+      border-radius: 16px;
+      padding: 16px 18px;
+      display: grid;
+      grid-template-columns: 1.3fr repeat(5, 1fr);
+      gap: 14px;
+      align-items: center;
+    }
+
+    .ride-date {
+      font-weight: 700;
+      font-size: 15px;
+    }
+
+    .ride-small {
+      color: var(--muted);
+      font-size: 12px;
+      margin-top: 4px;
+    }
+
+    .metric-label {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 5px;
+    }
+
+    .metric-value {
+      font-size: 15px;
+      font-weight: 700;
+    }
+
+    .metric-value.green {
+      color: var(--green-light);
+    }
+
+    .empty {
+      text-align: center;
+      color: var(--muted);
+      padding: 52px 20px;
+      background: rgba(255,255,255,0.02);
+      border: 1px dashed rgba(255,255,255,0.1);
+      border-radius: 16px;
+      font-size: 15px;
+    }
+
+    .footer-note {
+      margin-top: 32px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.6;
+      padding-top: 20px;
+      border-top: 1px solid var(--border-soft);
+    }
+
+    .footer-note a {
+      color: var(--green-light);
+      font-weight: 700;
+      text-decoration: none;
+    }
+
+    @media (max-width: 900px) {
+      .stat-grid,
+      .member-stats {
+        grid-template-columns: repeat(3, 1fr);
+      }
+
+      .ride-card {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .header-inner {
+        flex-wrap: wrap;
+        height: auto;
+        padding: 14px 20px;
+      }
+
+      .top-actions {
+        width: 100%;
+      }
+
+      .member-top {
+        flex-direction: column;
+      }
+    }
+
+    @media (max-width: 520px) {
+      main {
+        padding: 20px 16px 60px;
+      }
+
+      .card {
+        padding: 20px;
+      }
+
+      .stat-grid,
+      .member-stats,
+      .ride-card {
+        grid-template-columns: 1fr;
+      }
+
+      .top-actions button,
+      .button-row button {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <div class="header-inner">
+      <div class="brand">
+        <div class="logo">
+          <img src="assets/icon.png" alt="Bike Ride Green icon">
+        </div>
+
+        <div class="brand-text">
+          <h1>Bike Ride Green</h1>
+          <div class="subtitle">Club dashboard</div>
+        </div>
+      </div>
+
+      <div id="signedInActions" class="top-actions hidden">
+        <div id="userDisplayName" class="user-pill"></div>
+        <button class="btn-ghost" onclick="goBack()">Back</button>
+        <button class="btn-ghost" onclick="loadClubDashboard()">Refresh</button>
+        <button class="btn-danger-soft" onclick="signOut()">Sign out</button>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <section id="loginSection" class="login-wrap">
+      <div class="login-card">
+        <div class="login-eyebrow">Secure access</div>
+        <h2>Sign in to view club</h2>
+        <p class="helper">Use the same email and password from the Bike Ride Green app.</p>
+
+        <div class="field">
+          <label for="email">Email</label>
+          <input id="email" type="email" autocomplete="email" placeholder="you@example.com" />
+        </div>
+
+        <div class="field">
+          <label for="password">Password</label>
+          <input id="password" type="password" autocomplete="current-password" placeholder="••••••••" />
+        </div>
+
+        <div class="button-row">
+          <button id="loginButton" class="btn-primary" onclick="signIn()">Sign in</button>
+          <button class="btn-ghost" onclick="checkSession()">Check session</button>
+        </div>
+
+        <div id="loginStatus" class="status"></div>
+      </div>
+    </section>
+
+    <section id="clubSection" class="hidden">
+      <div class="card">
+        <div class="dash-header">
+          <h2 id="clubTitle">Club dashboard</h2>
+          <p id="clubDescription" class="dash-helper">Loading club details...</p>
+        </div>
+
+        <div class="stat-grid">
+          <div class="stat">
+            <div class="stat-label">Club rides</div>
+            <div id="clubRides" class="stat-value accent">0</div>
+          </div>
+
+          <div class="stat">
+            <div class="stat-label">Distance</div>
+            <div id="clubDistance" class="stat-value">0</div>
+          </div>
+
+          <div class="stat">
+            <div class="stat-label">Calories</div>
+            <div id="clubCalories" class="stat-value">0</div>
+          </div>
+
+          <div class="stat">
+            <div class="stat-label">Elevation</div>
+            <div id="clubElevation" class="stat-value">0</div>
+          </div>
+
+          <div class="stat">
+            <div class="stat-label">Duration</div>
+            <div id="clubDuration" class="stat-value">0</div>
+          </div>
+
+          <div class="stat">
+            <div class="stat-label">Best benchmark</div>
+            <div id="clubBenchmark" class="stat-value accent">0%</div>
+          </div>
+        </div>
+
+        <hr class="section-divider" />
+
+        <div class="dash-header">
+          <h2>Members</h2>
+          <p class="dash-helper">Each member shows total uploaded rides. Expand a member to view ride details.</p>
+        </div>
+
+        <div id="membersList" class="members-list"></div>
+
+        <p class="footer-note">
+          Bike Ride Green respects your privacy. Group ride summaries are only visible to members of this private group.
+          View the
+          <a href="https://bike.thegreenportfolio.ca/privacy.html" target="_blank" rel="noopener noreferrer">
+            Privacy & Safety Policy
+          </a>.
+        </p>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const SUPABASE_URL = "https://wstnsrizuhzezectivwf.supabase.co";
+    const SUPABASE_KEY = "sb_publishable_GE5PhqdYjJ3RCcXgkJxjeA_Ry9Oh-Oz";
+
+    const client = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    let currentUser = null;
+    let currentData = null;
+    let expandedMembers = new Set();
+
+    const loginSection = document.getElementById("loginSection");
+    const clubSection = document.getElementById("clubSection");
+    const signedInActions = document.getElementById("signedInActions");
+    const userDisplayName = document.getElementById("userDisplayName");
+    const loginStatus = document.getElementById("loginStatus");
+
+    const params = new URLSearchParams(window.location.search);
+    const groupId = params.get("group_id");
+
+    async function checkSession() {
+      const { data, error } = await client.auth.getSession();
+
+      if (error) {
+        showLoginStatus(error.message);
+        return;
+      }
+
+      const session = data.session;
+
+      if (session && session.user) {
+        currentUser = session.user;
+        showClub();
+        await loadProfile(session.user);
+        await loadClubDashboard();
+      } else {
+        showLogin();
+      }
+    }
+
+    async function signIn() {
+      const email = document.getElementById("email").value.trim();
+      const password = document.getElementById("password").value;
+
+      if (!email || !password) {
+        showLoginStatus("Please enter your email and password.");
+        return;
+      }
+
+      setLoginLoading(true);
+      showLoginStatus("");
+
+      const { data, error } = await client.auth.signInWithPassword({
+        email,
+        password
+      });
+
+      setLoginLoading(false);
+
+      if (error) {
+        showLoginStatus(error.message);
+        return;
+      }
+
+      currentUser = data.user;
+      showClub();
+      await loadProfile(data.user);
+      await loadClubDashboard();
+    }
+
+    async function signOut() {
+      await client.auth.signOut();
+
+      currentUser = null;
+      currentData = null;
+      expandedMembers.clear();
+
+      showLogin();
+    }
+
+    async function loadProfile(user) {
+      const { data, error } = await client
+        .from("profiles")
+        .select("display_name, email")
+        .eq("id", user.id)
+        .single();
+
+      if (error) {
+        userDisplayName.textContent = user.email || "Signed in";
+        return;
+      }
+
+      userDisplayName.textContent =
+        data.display_name || data.email || user.email || "Signed in";
+    }
+
+    async function loadClubDashboard() {
+      if (!currentUser) return;
+
+      if (!groupId) {
+        renderError("Missing group_id in the page URL.");
+        return;
+      }
+
+      const { data, error } = await client.rpc("get_group_dashboard", {
+        p_group_id: groupId
+      });
+
+      if (error) {
+        renderError(error.message);
+        return;
+      }
+
+      currentData = data;
+
+      renderClubHeader();
+      renderClubTotals();
+      renderMembers();
+    }
+
+    function renderClubHeader() {
+      const group = currentData.group || {};
+
+      document.getElementById("clubTitle").textContent =
+        group.name || "Club dashboard";
+
+      const typeLabel = groupTypeLabel(group.group_type);
+
+      document.getElementById("clubDescription").textContent =
+        group.description
+          ? `${typeLabel} • ${group.description}`
+          : `${typeLabel} • Private Bike Ride Green group`;
+    }
+
+    function renderClubTotals() {
+      const totals = currentData.totals || {};
+
+      document.getElementById("clubRides").textContent =
+        Number(totals.ride_count || 0);
+
+      document.getElementById("clubDistance").textContent =
+        `${formatNumber(totals.distance, 1)} ${totals.distance_unit || ""}`;
+
+      document.getElementById("clubCalories").textContent =
+        `${Math.round(Number(totals.calories) || 0)} kcal`;
+
+      document.getElementById("clubElevation").textContent =
+        `${formatNumber(totals.elevation, 0)} ${totals.elevation_unit || ""}`;
+
+      document.getElementById("clubDuration").textContent =
+        formatDuration(totals.duration_seconds || 0);
+
+      document.getElementById("clubBenchmark").textContent =
+        `${formatNumber(totals.best_benchmark, 1)}%`;
+    }
+
+    function renderMembers() {
+      const list = document.getElementById("membersList");
+      const members = currentData.members || [];
+
+      if (!members.length) {
+        list.innerHTML = `<div class="empty">No members found.</div>`;
+        return;
+      }
+
+      list.innerHTML = members.map(member => memberCardHTML(member)).join("");
+    }
+
+    function memberCardHTML(member) {
+      const totals = member.totals || {};
+      const rides = member.rides || [];
+      const isExpanded = expandedMembers.has(member.user_id);
+      const name = member.display_name || member.email || `Member ${shortId(member.user_id)}`;
+
+      return `
+        <article class="member-card">
+          <div class="member-top">
+            <div>
+              <div class="member-name">${escapeHtml(name)}</div>
+              <div class="member-meta">
+                ${escapeHtml(member.role || "member")} • ${rides.length} ride${rides.length === 1 ? "" : "s"}
+              </div>
+            </div>
+
+            <button class="btn-ghost" onclick="toggleMember('${escapeHtml(member.user_id)}')">
+              ${isExpanded ? "Hide rides" : "View rides"}
+            </button>
+          </div>
+
+          <div class="member-stats">
+            <div class="mini-stat">
+              <div class="mini-label">Rides</div>
+              <div class="mini-value">${Number(totals.ride_count || 0)}</div>
+            </div>
+
+            <div class="mini-stat">
+              <div class="mini-label">Distance</div>
+              <div class="mini-value">${formatNumber(totals.distance, 1)} ${escapeHtml(totals.distance_unit || "")}</div>
+            </div>
+
+            <div class="mini-stat">
+              <div class="mini-label">Avg speed</div>
+              <div class="mini-value">${formatNumber(totals.avg_speed, 1)} ${escapeHtml(speedUnitLabel(totals.speed_unit))}</div>
+            </div>
+
+            <div class="mini-stat">
+              <div class="mini-label">Elevation</div>
+              <div class="mini-value">${formatNumber(totals.elevation, 0)} ${escapeHtml(totals.elevation_unit || "")}</div>
+            </div>
+
+            <div class="mini-stat">
+              <div class="mini-label">Duration</div>
+              <div class="mini-value">${formatDuration(totals.duration_seconds || 0)}</div>
+            </div>
+
+            <div class="mini-stat">
+              <div class="mini-label">Best benchmark</div>
+              <div class="mini-value">${formatNumber(totals.best_benchmark, 1)}%</div>
+            </div>
+          </div>
+
+          ${
+            isExpanded
+              ? `<div class="rides-list">
+                  ${rides.length ? rides.map(ride => rideCardHTML(ride)).join("") : `<div class="empty">No rides uploaded yet.</div>`}
+                </div>`
+              : ""
+          }
+        </article>
+      `;
+    }
+
+    function rideCardHTML(ride) {
+      const date = formatDate(ride.ride_day || ride.ride_date);
+      const benchmark = safeNumber(ride.personal_benchmark);
+      const distance = safeNumber(ride.distance_value);
+      const avgSpeed = safeNumber(ride.average_speed_value);
+      const elevation = safeNumber(ride.elevation_gain_value);
+      const calories = ride.calories ?? 0;
+      const duration = formatDuration(ride.duration_seconds || 0);
+
+      return `
+        <article class="ride-card">
+          <div>
+            <div class="ride-date">${escapeHtml(date)}</div>
+            <div class="ride-small">ID: ${escapeHtml(shortId(ride.local_ride_id || ride.id))}</div>
+          </div>
+
+          <div>
+            <div class="metric-label">Benchmark</div>
+            <div class="metric-value green">${formatNumber(benchmark, 1)}%</div>
+          </div>
+
+          <div>
+            <div class="metric-label">Distance</div>
+            <div class="metric-value">${formatNumber(distance, 2)} ${escapeHtml(ride.distance_unit || "")}</div>
+          </div>
+
+          <div>
+            <div class="metric-label">Avg speed</div>
+            <div class="metric-value">${formatNumber(avgSpeed, 1)} ${escapeHtml(speedUnitLabel(ride.speed_unit))}</div>
+          </div>
+
+          <div>
+            <div class="metric-label">Elevation</div>
+            <div class="metric-value">${formatNumber(elevation, 0)} ${escapeHtml(ride.elevation_unit || "")}</div>
+          </div>
+
+          <div>
+            <div class="metric-label">Calories</div>
+            <div class="metric-value">${escapeHtml(String(calories))} kcal</div>
+            <div class="ride-small">${escapeHtml(duration)}</div>
+          </div>
+        </article>
+      `;
+    }
+
+    function toggleMember(userId) {
+      if (expandedMembers.has(userId)) {
+        expandedMembers.delete(userId);
+      } else {
+        expandedMembers.add(userId);
+      }
+
+      renderMembers();
+    }
+
+    function renderError(message) {
+      document.getElementById("clubTitle").textContent = "Could not load club";
+      document.getElementById("clubDescription").textContent = message || "Unknown error.";
+
+      document.getElementById("membersList").innerHTML =
+        `<div class="empty">${escapeHtml(message || "Could not load club.")}</div>`;
+    }
+
+    function showClub() {
+      loginSection.classList.add("hidden");
+      clubSection.classList.remove("hidden");
+      signedInActions.classList.remove("hidden");
+      showLoginStatus("");
+    }
+
+    function showLogin() {
+      loginSection.classList.remove("hidden");
+      clubSection.classList.add("hidden");
+      signedInActions.classList.add("hidden");
+      userDisplayName.textContent = "";
+      showLoginStatus("");
+    }
+
+    function goBack() {
+      window.location.href = "index.html";
+    }
+
+    function setLoginLoading(loading) {
+      const btn = document.getElementById("loginButton");
+      btn.disabled = loading;
+      btn.textContent = loading ? "Signing in…" : "Sign in";
+    }
+
+    function showLoginStatus(msg) {
+      loginStatus.textContent = msg || "";
+    }
+
+    function groupTypeLabel(type) {
+      if (type === "club") return "Club";
+      if (type === "family") return "Family";
+      if (type === "challenge") return "Riding Challenge";
+      return "Group";
+    }
+
+    function safeNumber(v) {
+      const n = Number(v);
+      return Number.isFinite(n) ? n : 0;
+    }
+
+    function formatNumber(v, d) {
+      return safeNumber(v).toLocaleString(undefined, {
+        minimumFractionDigits: d,
+        maximumFractionDigits: d
+      });
+    }
+
+    function formatDuration(totalSeconds) {
+      totalSeconds = Math.max(0, Number(totalSeconds) || 0);
+
+      const hours = Math.floor(totalSeconds / 3600);
+      const minutes = Math.floor((totalSeconds % 3600) / 60);
+      const seconds = Math.floor(totalSeconds % 60);
+
+      if (hours > 0) return `${hours}h ${String(minutes).padStart(2, "0")}m`;
+      return `${minutes}m ${String(seconds).padStart(2, "0")}s`;
+    }
+
+    function formatDate(value) {
+      if (!value) return "Unknown date";
+
+      const raw = String(value);
+      const datePart = raw.slice(0, 10);
+      const match = datePart.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+
+      if (match) {
+        const year = Number(match[1]);
+        const month = Number(match[2]) - 1;
+        const day = Number(match[3]);
+
+        const localDate = new Date(year, month, day);
+
+        return localDate.toLocaleDateString(undefined, {
+          year: "numeric",
+          month: "short",
+          day: "numeric"
+        });
+      }
+
+      const date = new Date(value);
+
+      if (Number.isNaN(date.getTime())) return value;
+
+      return date.toLocaleDateString(undefined, {
+        year: "numeric",
+        month: "short",
+        day: "numeric"
+      });
+    }
+
+    function speedUnitLabel(unit) {
+      if (unit === "kmh") return "km/h";
+      return unit || "";
+    }
+
+    function shortId(id) {
+      if (!id) return "—";
+      return String(id).slice(0, 6);
+    }
+
+    function escapeHtml(value) {
+      return String(value ?? "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+
+    checkSession();
+
+    client.auth.onAuthStateChange((_event, session) => {
+      if (session && session.user) {
+        currentUser = session.user;
+
+        showClub();
+        loadProfile(session.user).then(() => {
+          loadClubDashboard();
+        });
+      } else {
+        currentUser = null;
+        currentData = null;
+        expandedMembers.clear();
+        showLogin();
+      }
+    });
+  </script>
+</body>
+</html>
