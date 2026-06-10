@@ -1420,18 +1420,20 @@
       if (month) rides = rides.filter(r => (r.ride_day || "").slice(5, 7) === month);
 
       if (search) {
-        rides = rides.filter(r => {
-          const combined = [
-            r.ride_day,
-            r.distance_unit,
-            r.speed_unit,
-            r.elevation_unit,
-            r.display_unit_system
-          ].join(" ").toLowerCase();
+  rides = rides.filter(r => {
+    const rawDate = String(r.ride_day || r.ride_date || "");
+    const shortDate = formatDate(rawDate).toLowerCase();
+    const longDate = formatLongDate(rawDate).toLowerCase();
 
-          return combined.includes(search);
-        });
-      }
+    const combined = [
+      rawDate,
+      shortDate,
+      longDate
+    ].join(" ").toLowerCase();
+
+    return combined.includes(search);
+  });
+}
 
       updateStats(rides);
       updateRideChart(rides);
@@ -1984,18 +1986,70 @@
     }
 
     function formatDate(value) {
-      if (!value) return "Unknown date";
+  if (!value) return "Unknown date";
 
-      const date = new Date(value);
+  const raw = String(value);
+  const datePart = raw.slice(0, 10);
 
-      if (Number.isNaN(date.getTime())) return value;
+  const match = datePart.match(/^(\d{4})-(\d{2})-(\d{2})$/);
 
-      return date.toLocaleDateString(undefined, {
-        year: "numeric",
-        month: "short",
-        day: "numeric"
-      });
-    }
+  if (match) {
+    const year = Number(match[1]);
+    const month = Number(match[2]) - 1;
+    const day = Number(match[3]);
+
+    const localDate = new Date(year, month, day);
+
+    return localDate.toLocaleDateString(undefined, {
+      year: "numeric",
+      month: "short",
+      day: "numeric"
+    });
+  }
+
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) return value;
+
+  return date.toLocaleDateString(undefined, {
+    year: "numeric",
+    month: "short",
+    day: "numeric"
+  });
+}
+    
+    function formatLongDate(value) {
+  if (!value) return "Unknown date";
+
+  const raw = String(value);
+  const datePart = raw.slice(0, 10);
+
+  const match = datePart.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+
+  if (match) {
+    const year = Number(match[1]);
+    const month = Number(match[2]) - 1;
+    const day = Number(match[3]);
+
+    const localDate = new Date(year, month, day);
+
+    return localDate.toLocaleDateString(undefined, {
+      year: "numeric",
+      month: "long",
+      day: "numeric"
+    });
+  }
+
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) return value;
+
+  return date.toLocaleDateString(undefined, {
+    year: "numeric",
+    month: "long",
+    day: "numeric"
+  });
+}
 
     function speedUnitLabel(unit) {
       if (unit === "kmh") return "km/h";
