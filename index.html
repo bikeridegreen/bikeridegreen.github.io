@@ -731,6 +731,52 @@
 .group-member strong {
   color: var(--text);
 }
+.group-member-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 6px 0;
+  border-top: 1px solid rgba(255,255,255,0.04);
+}
+
+.group-member-row:first-child {
+  border-top: 0;
+}
+
+.group-member-name {
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.group-member-role {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.btn-small-soft-danger {
+  padding: 6px 11px;
+  font-size: 12px;
+  border-radius: 999px;
+  background: rgba(239,68,68,0.08);
+  color: #fca5a5;
+  border: 1px solid rgba(239,68,68,0.18);
+}
+
+.btn-small-soft-danger:hover {
+  background: rgba(239,68,68,0.14);
+  color: #fecaca;
+}
+
+.group-danger-zone {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(239,68,68,0.12);
+  display: flex;
+  justify-content: flex-start;
+}
+
     
 
     .footer-note {
@@ -1413,12 +1459,22 @@
           </div>
 
           ${
-            isExpanded
-              ? `<div class="group-members">
-                  ${members.map(member => groupMemberHTML(member)).join("")}
-                </div>`
-              : ""
-          }
+  isExpanded
+    ? `<div class="group-members">
+        ${members.map(member => groupMemberHTML(member, group)).join("")}
+
+        ${
+          isGroupOwner(group)
+            ? `<div class="group-danger-zone">
+                <button class="btn-small-soft-danger" onclick="deleteRideGroup('${escapeHtml(group.id)}', '${escapeHtml(group.name)}')">
+                  Delete group
+                </button>
+              </div>`
+            : ""
+        }
+      </div>`
+    : ""
+}
         </div>
 
         <div class="group-actions">
@@ -1461,7 +1517,7 @@ function toggleGroupMembers(groupId) {
   renderGroups();
 }
 
-function groupMemberHTML(member) {
+function groupMemberHTML(member, group) {
   const role = member.role || "member";
 
   const name =
@@ -1469,9 +1525,24 @@ function groupMemberHTML(member) {
     member.email ||
     `Member ${shortId(member.user_id)}`;
 
+  const canRemove =
+    isGroupOwner(group) &&
+    member.user_id !== group.owner_id;
+
   return `
-    <div class="group-member">
-      <strong>${escapeHtml(name)}</strong> • ${escapeHtml(role)}
+    <div class="group-member-row">
+      <div>
+        <span class="group-member-name">${escapeHtml(name)}</span>
+        <span class="group-member-role"> • ${escapeHtml(role)}</span>
+      </div>
+
+      ${
+        canRemove
+          ? `<button class="btn-small-soft-danger" onclick="removeGroupMember('${escapeHtml(group.id)}', '${escapeHtml(member.user_id)}', '${escapeHtml(name)}')">
+              Remove
+            </button>`
+          : ""
+      }
     </div>
   `;
 }
@@ -1502,6 +1573,47 @@ function groupMemberHTML(member) {
       populateYearFilter();
       renderRides();
     }
+    
+    function isGroupOwner(group) {
+  return currentUser && group.owner_id === currentUser.id;
+}
+
+async function removeGroupMember(groupId, userId, memberName) {
+  const confirmed = confirm(`Remove ${memberName} from this group? Their rides will not be deleted.`);
+
+  if (!confirmed) return;
+
+  const { error } = await client.rpc("remove_group_member", {
+    p_group_id: groupId,
+    p_user_id: userId
+  });
+
+  if (error) {
+    alert(error.message);
+    return;
+  }
+
+  await loadGroups();
+}
+
+async function deleteRideGroup(groupId, groupName) {
+  const typed = prompt(`To delete "${groupName}", type DELETE. Rides will not be deleted.`);
+
+  if (typed !== "DELETE") return;
+
+  const { error } = await client.rpc("delete_ride_group", {
+    p_group_id: groupId
+  });
+
+  if (error) {
+    alert(error.message);
+    return;
+  }
+
+  alert("Group deleted.");
+  await loadGroups();
+}
+    
 
     function renderRides() {
       const ridesList = document.getElementById("ridesList");
