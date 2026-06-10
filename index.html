@@ -687,6 +687,30 @@
       gap: 8px;
       flex-wrap: wrap;
     }
+    .group-member-count {
+  color: var(--green-light);
+  font-size: 13px;
+  font-weight: 700;
+  margin-top: 6px;
+}
+
+.group-members {
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border-soft);
+  display: grid;
+  gap: 8px;
+}
+
+.group-member {
+  color: var(--muted-2);
+  font-size: 13px;
+}
+
+.group-member strong {
+  color: var(--text);
+}
+    
 
     .footer-note {
       margin-top: 32px;
@@ -1013,6 +1037,7 @@
     let rideChart = null;
     let expandedMonths = new Set();
     let expandedYears = new Set();
+    let expandedGroupMembers = new Set();
 
     const loginSection = document.getElementById("loginSection");
     const dashboardSection = document.getElementById("dashboardSection");
@@ -1295,21 +1320,7 @@
     async function loadGroups() {
   if (!currentUser) return;
 
-  const { data, error } = await client
-    .from("ride_group_members")
-    .select(`
-      role,
-      ride_groups (
-        id,
-        name,
-        group_type,
-        description,
-        created_at,
-        owner_id
-      )
-    `)
-    .eq("user_id", currentUser.id)
-    .order("created_at", { ascending: false, referencedTable: "ride_groups" });
+  const { data, error } = await client.rpc("get_my_ride_groups_with_members");
 
   if (error) {
     console.error("Could not load groups:", error.message);
@@ -1325,12 +1336,16 @@
     return;
   }
 
-  allGroups = (data || [])
-    .filter(row => row.ride_groups)
-    .map(row => ({
-      ...row.ride_groups,
-      role: row.role
-    }));
+  allGroups = (data || []).map(group => ({
+    id: group.group_id,
+    name: group.group_name,
+    group_type: group.group_type,
+    description: group.group_description,
+    created_at: group.group_created_at,
+    owner_id: group.owner_id,
+    role: group.my_role,
+    members: group.members || []
+  }));
 
   renderGroups();
 }
@@ -1352,22 +1367,43 @@
   list.innerHTML = allGroups.map(group => {
     const role = group.role || "member";
     const canInvite = role === "owner";
+    const members = group.members || [];
+    const memberCount = members.length;
+    const isExpanded = expandedGroupMembers.has(group.id);
 
     return `
       <article class="group-card">
         <div>
           <div class="group-title">${escapeHtml(group.name)}</div>
+
           <div class="group-meta">
             ${escapeHtml(groupTypeLabel(group.group_type))} • ${escapeHtml(role)}
           </div>
+
           ${
             group.description
               ? `<div class="group-meta">${escapeHtml(group.description)}</div>`
               : ""
           }
+
+          <div class="group-member-count">
+            Members: ${memberCount}
+          </div>
+
+          ${
+            isExpanded
+              ? `<div class="group-members">
+                  ${members.map(member => groupMemberHTML(member)).join("")}
+                </div>`
+              : ""
+          }
         </div>
 
         <div class="group-actions">
+          <button class="btn-ghost" onclick="toggleGroupMembers('${escapeHtml(group.id)}')">
+            ${isExpanded ? "Hide members" : "View members"}
+          </button>
+
           ${
             canInvite
               ? `<button class="btn-ghost" onclick="createGroupInvite('${escapeHtml(group.id)}')">
@@ -1379,6 +1415,31 @@
       </article>
     `;
   }).join("");
+}
+
+function toggleGroupMembers(groupId) {
+  if (expandedGroupMembers.has(groupId)) {
+    expandedGroupMembers.delete(groupId);
+  } else {
+    expandedGroupMembers.add(groupId);
+  }
+
+  renderGroups();
+}
+
+function groupMemberHTML(member) {
+  const role = member.role || "member";
+
+  const name =
+    member.display_name ||
+    member.email ||
+    `Member ${shortId(member.user_id)}`;
+
+  return `
+    <div class="group-member">
+      <strong>${escapeHtml(name)}</strong> • ${escapeHtml(role)}
+    </div>
+  `;
 }
 
     function groupTypeLabel(type) {
@@ -1889,25 +1950,61 @@
       return rows.reduce((s, r) => s + (Number(r[key]) || 0), 0) / rows.length;
     }
 
-    function formatChartDay(value) {
-      const date = new Date(value);
-      if (Number.isNaN(date.getTime())) return value;
+    function localDateFromYMD(value) {
+  if (!value) return null;
 
-      return date.toLocaleDateString(undefined, {
-        month: "short",
-        day: "numeric"
-      });
-    }
+  const raw = String(value);
+  const datePart = raw.slice(0, 10);
+  const match = datePart.match(/^(\d{4})-(\d{2})-(\d{2})$/);
 
-    function formatChartMonth(value) {
-      const date = new Date(`${value}-01T00:00:00`);
-      if (Number.isNaN(date.getTime())) return value;
+  if (!match) return null;
 
-      return date.toLocaleDateString(undefined, {
-        month: "short",
-        year: "numeric"
-      });
-    }
+  const year = Number(match[1]);
+  const month = Number(match[2]) - 1;
+  const day = Number(match[3]);
+
+  return new Date(year, month, day);
+}
+
+function formatChartDay(value) {
+  const localDate = localDateFromYMD(value);
+
+  if (localDate) {
+    return localDate.toLocaleDateString(undefined, {
+      month: "short",
+      day: "numeric"
+    });
+  }
+
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) return value;
+
+  return date.toLocaleDateString(undefined, {
+    month: "short",
+    day: "numeric"
+  });
+}
+
+function formatChartMonth(value) {
+  const localDate = localDateFromYMD(`${value}-01`);
+
+  if (localDate) {
+    return localDate.toLocaleDateString(undefined, {
+      month: "short",
+      year: "numeric"
+    });
+  }
+
+  const date = new Date(`${value}-01T00:00:00`);
+
+  if (Number.isNaN(date.getTime())) return value;
+
+  return date.toLocaleDateString(undefined, {
+    month: "short",
+    year: "numeric"
+  });
+}
 
     function populateYearFilter() {
       const yearFilter = document.getElementById("yearFilter");
