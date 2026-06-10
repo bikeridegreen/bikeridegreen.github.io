@@ -8,6 +8,7 @@
   <meta name="description" content="Bike Ride Green private club dashboard." />
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -162,6 +163,12 @@
       transform: translateY(-1px);
     }
 
+    button:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+      transform: none;
+    }
+
     .btn-primary {
       background: var(--green-dim);
       box-shadow: 0 0 0 1px rgba(34,197,94,0.4), 0 4px 16px rgba(34,197,94,0.18);
@@ -261,7 +268,7 @@
       margin-bottom: 8px;
     }
 
-    input {
+    input, select {
       width: 100%;
       padding: 13px 16px;
       border-radius: 12px;
@@ -273,9 +280,13 @@
       outline: none;
     }
 
-    input:focus {
+    input:focus, select:focus {
       border-color: rgba(34,197,94,0.5);
       box-shadow: 0 0 0 3px rgba(34,197,94,0.1);
+    }
+
+    select option {
+      background: #1a2e1e;
     }
 
     .button-row {
@@ -428,6 +439,26 @@
       align-items: center;
     }
 
+    .ride-card.selected-ride {
+      border-color: rgba(74,222,128,0.75);
+      background: rgba(34,197,94,0.10);
+      box-shadow: 0 0 0 1px rgba(74,222,128,0.22);
+    }
+
+    .selected-date-toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 12px 14px;
+      border: 1px solid rgba(74,222,128,0.28);
+      border-radius: 14px;
+      background: rgba(34,197,94,0.06);
+      color: var(--green-light);
+      font-size: 13px;
+      font-weight: 700;
+    }
+
     .ride-date {
       font-weight: 700;
       font-size: 15px;
@@ -455,6 +486,147 @@
 
     .metric-value.green {
       color: var(--green-light);
+    }
+
+    .year-group {
+      border: 1px solid rgba(34,197,94,0.16);
+      border-radius: 18px;
+      background: rgba(34,197,94,0.025);
+      overflow: hidden;
+    }
+
+    .year-header {
+      width: 100%;
+      border-radius: 0;
+      padding: 18px 20px;
+      background: rgba(34,197,94,0.055);
+      color: var(--text);
+      border: 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      text-align: left;
+    }
+
+    .year-header:hover {
+      background: rgba(34,197,94,0.10);
+    }
+
+    .year-title {
+      font-size: 18px;
+      font-weight: 900;
+    }
+
+    .year-summary {
+      color: var(--muted);
+      font-size: 13px;
+      margin-top: 4px;
+    }
+
+    .year-chevron {
+      color: var(--green-light);
+      font-size: 20px;
+      font-weight: 900;
+    }
+
+    .year-months {
+      display: grid;
+      gap: 10px;
+      padding: 12px;
+    }
+
+    .month-group {
+      border: 1px solid var(--border-soft);
+      border-radius: 16px;
+      background: rgba(255,255,255,0.025);
+      overflow: hidden;
+    }
+
+    .month-header {
+      width: 100%;
+      border-radius: 0;
+      padding: 16px 18px;
+      background: rgba(34,197,94,0.04);
+      color: var(--text);
+      border: 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      text-align: left;
+    }
+
+    .month-header:hover {
+      background: rgba(34,197,94,0.08);
+    }
+
+    .month-title {
+      font-size: 16px;
+      font-weight: 800;
+    }
+
+    .month-summary {
+      color: var(--muted);
+      font-size: 13px;
+      margin-top: 4px;
+    }
+
+    .month-chevron {
+      color: var(--green-light);
+      font-size: 18px;
+      font-weight: 800;
+    }
+
+    .member-month-detail {
+      display: grid;
+      gap: 10px;
+      padding: 12px;
+    }
+
+    .chart-card {
+      background: rgba(255,255,255,0.025);
+      border: 1px solid var(--border-soft);
+      border-radius: 18px;
+      padding: 22px;
+    }
+
+    .member-chart-card {
+      margin: 0 0 4px;
+    }
+
+    .chart-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+
+    .chart-title {
+      font-size: 16px;
+      font-weight: 700;
+      margin: 0 0 4px;
+    }
+
+    .chart-subtitle {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .chart-control {
+      width: 200px;
+      padding: 9px 12px;
+      border-radius: 10px;
+      border: 1px solid var(--border-soft);
+      background: rgba(255,255,255,0.04);
+      color: var(--text);
+      font-size: 13px;
+    }
+
+    .chart-wrap {
+      height: 260px;
+      position: relative;
     }
 
     .empty {
@@ -502,8 +674,13 @@
         width: 100%;
       }
 
-      .member-top {
+      .member-top,
+      .chart-header {
         flex-direction: column;
+      }
+
+      .chart-control {
+        width: 100%;
       }
     }
 
@@ -622,7 +799,7 @@
 
         <div class="dash-header">
           <h2>Members</h2>
-          <p class="dash-helper">Each member shows total uploaded rides. Expand a member to view ride details.</p>
+          <p class="dash-helper">Expand a member, then expand a year and month to view rides and charts.</p>
         </div>
 
         <div id="membersList" class="members-list"></div>
@@ -647,6 +824,11 @@
     let currentUser = null;
     let currentData = null;
     let expandedMembers = new Set();
+    let expandedMemberYears = new Set();
+    let expandedMemberMonths = new Set();
+    let selectedMemberChartDates = {};
+    let selectedMemberChartMetrics = {};
+    let memberCharts = {};
 
     const loginSection = document.getElementById("loginSection");
     const clubSection = document.getElementById("clubSection");
@@ -713,6 +895,11 @@
       currentUser = null;
       currentData = null;
       expandedMembers.clear();
+      expandedMemberYears.clear();
+      expandedMemberMonths.clear();
+      selectedMemberChartDates = {};
+      selectedMemberChartMetrics = {};
+      destroyMemberCharts();
 
       showLogin();
     }
@@ -755,6 +942,7 @@
       renderClubHeader();
       renderClubTotals();
       renderMembers();
+      renderOpenMemberCharts();
     }
 
     function renderClubHeader() {
@@ -796,6 +984,8 @@
     function renderMembers() {
       const list = document.getElementById("membersList");
       const members = currentData.members || [];
+
+      destroyMemberCharts();
 
       if (!members.length) {
         list.innerHTML = `<div class="empty">No members found.</div>`;
@@ -861,7 +1051,7 @@
           ${
             isExpanded
               ? `<div class="rides-list">
-                  ${rides.length ? rides.map(ride => rideCardHTML(ride)).join("") : `<div class="empty">No rides uploaded yet.</div>`}
+                  ${rides.length ? memberYearsHTML(member) : `<div class="empty">No rides uploaded yet.</div>`}
                 </div>`
               : ""
           }
@@ -869,7 +1059,132 @@
       `;
     }
 
-    function rideCardHTML(ride) {
+    function memberYearsHTML(member) {
+      const rides = member.rides || [];
+      const groups = {};
+
+      rides.forEach(ride => {
+        const year = yearKeyFromRide(ride);
+        if (!year) return;
+
+        if (!groups[year]) groups[year] = [];
+        groups[year].push(ride);
+      });
+
+      const years = Object.keys(groups).sort().reverse();
+
+      return years.map(year => {
+        const key = `${member.user_id}-${year}`;
+        const isExpanded = expandedMemberYears.has(key);
+        const yearRides = groups[year];
+
+        return `
+          <section class="year-group">
+            <button class="year-header" onclick="toggleMemberYear('${escapeHtml(key)}')">
+              <div>
+                <div class="year-title">${escapeHtml(year)}</div>
+                <div class="year-summary">${escapeHtml(summaryText(yearRides))}</div>
+              </div>
+
+              <div class="year-chevron">${isExpanded ? "−" : "+"}</div>
+            </button>
+
+            ${
+              isExpanded
+                ? `<div class="year-months">${memberMonthsHTML(member, yearRides)}</div>`
+                : ""
+            }
+          </section>
+        `;
+      }).join("");
+    }
+
+    function memberMonthsHTML(member, rides) {
+      const groups = {};
+
+      rides.forEach(ride => {
+        const month = monthKeyFromRide(ride);
+        if (!month) return;
+
+        if (!groups[month]) groups[month] = [];
+        groups[month].push(ride);
+      });
+
+      const months = Object.keys(groups).sort().reverse();
+
+      return months.map(month => {
+        const key = `${member.user_id}-${month}`;
+        const isExpanded = expandedMemberMonths.has(key);
+        const monthRides = groups[month];
+        const chartId = `chart-${safeDomId(member.user_id)}-${month.replace("-", "")}`;
+        const selectedDate = selectedMemberChartDates[key] || "";
+        const selectedMetric = selectedMemberChartMetrics[key] || "distance";
+
+        const visibleRides = selectedDate
+          ? monthRides.filter(ride => {
+              const rideDate = String(ride.ride_day || ride.ride_date || "").slice(0, 10);
+              return rideDate === selectedDate;
+            })
+          : monthRides;
+
+        return `
+          <section class="month-group" data-month-key="${escapeHtml(key)}">
+            <button class="month-header" onclick="toggleMemberMonth('${escapeHtml(key)}')">
+              <div>
+                <div class="month-title">${escapeHtml(formatMonthTitle(month))}</div>
+                <div class="month-summary">${escapeHtml(summaryText(monthRides))}</div>
+              </div>
+
+              <div class="month-chevron">${isExpanded ? "−" : "+"}</div>
+            </button>
+
+            ${
+              isExpanded
+                ? `
+                  <div class="member-month-detail">
+                    <div class="chart-card member-chart-card">
+                      <div class="chart-header">
+                        <div>
+                          <div class="chart-title">Monthly chart</div>
+                          <div class="chart-subtitle">Click a bar to show rides for that day.</div>
+                        </div>
+
+                        <select class="chart-control" onchange="setMemberChartMetric('${escapeHtml(key)}', '${escapeHtml(chartId)}', '${escapeHtml(member.user_id)}', '${escapeHtml(month)}', this.value)">
+                          <option value="distance" ${selectedMetric === "distance" ? "selected" : ""}>Distance</option>
+                          <option value="duration" ${selectedMetric === "duration" ? "selected" : ""}>Time</option>
+                          <option value="benchmark" ${selectedMetric === "benchmark" ? "selected" : ""}>Benchmark</option>
+                          <option value="speed" ${selectedMetric === "speed" ? "selected" : ""}>Average speed</option>
+                          <option value="elevation" ${selectedMetric === "elevation" ? "selected" : ""}>Elevation</option>
+                          <option value="calories" ${selectedMetric === "calories" ? "selected" : ""}>Calories</option>
+                        </select>
+                      </div>
+
+                      <div class="chart-wrap">
+                        <canvas id="${escapeHtml(chartId)}"></canvas>
+                      </div>
+                    </div>
+
+                    ${
+                      selectedDate
+                        ? `<div class="selected-date-toolbar">
+                            <span>Showing rides for ${escapeHtml(formatDate(selectedDate))}</span>
+                            <button class="btn-ghost" onclick="clearMemberChartDate('${escapeHtml(key)}')">Show all rides</button>
+                          </div>`
+                        : ""
+                    }
+
+                    ${visibleRides.length ? visibleRides.map(ride => rideCardHTML(ride, Boolean(selectedDate), key)).join("") : `<div class="empty">No rides found.</div>`
+                    }
+                  </div>
+                `
+                : ""
+            }
+          </section>
+        `;
+      }).join("");
+    }
+
+    function rideCardHTML(ride, isSelected = false, selectedKey = "") {
       const date = formatDate(ride.ride_day || ride.ride_date);
       const benchmark = safeNumber(ride.personal_benchmark);
       const distance = safeNumber(ride.distance_value);
@@ -879,7 +1194,7 @@
       const duration = formatDuration(ride.duration_seconds || 0);
 
       return `
-        <article class="ride-card">
+        <article class="ride-card ${isSelected ? "selected-ride" : ""}" ${isSelected ? `data-selected-key="${escapeHtml(selectedKey)}"` : ""}>
           <div>
             <div class="ride-date">${escapeHtml(date)}</div>
             <div class="ride-small">ID: ${escapeHtml(shortId(ride.local_ride_id || ride.id))}</div>
@@ -922,6 +1237,361 @@
       }
 
       renderMembers();
+      renderOpenMemberCharts();
+    }
+
+    function toggleMemberYear(key) {
+      if (expandedMemberYears.has(key)) {
+        expandedMemberYears.delete(key);
+      } else {
+        expandedMemberYears.add(key);
+      }
+
+      renderMembers();
+      renderOpenMemberCharts();
+    }
+
+    function toggleMemberMonth(key) {
+      if (expandedMemberMonths.has(key)) {
+        expandedMemberMonths.delete(key);
+      } else {
+        expandedMemberMonths.add(key);
+      }
+
+      renderMembers();
+      renderOpenMemberCharts();
+    }
+
+   function setMemberChartMetric(key, chartId, userId, monthKey, metric) {
+  selectedMemberChartMetrics[key] = metric;
+
+  // Changing metric should return to the full month view
+  delete selectedMemberChartDates[key];
+
+  renderMembers();
+
+  setTimeout(() => {
+    renderOpenMemberCharts();
+
+    const monthSection = document.querySelector(`[data-month-key="${cssEscapeValue(key)}"]`);
+    if (monthSection) {
+      monthSection.scrollIntoView({
+        behavior: "smooth",
+        block: "start"
+      });
+    }
+  }, 100);
+}
+
+    function clearMemberChartDate(key) {
+      delete selectedMemberChartDates[key];
+
+      renderMembers();
+
+      setTimeout(() => {
+        renderOpenMemberCharts();
+      }, 100);
+    }
+
+    function renderOpenMemberCharts() {
+      setTimeout(() => {
+        const members = currentData?.members || [];
+
+        members.forEach(member => {
+          const rides = member.rides || [];
+
+          const months = Array.from(new Set(
+            rides.map(ride => monthKeyFromRide(ride)).filter(Boolean)
+          ));
+
+          months.forEach(month => {
+            const key = `${member.user_id}-${month}`;
+
+            if (expandedMemberMonths.has(key)) {
+              const chartId = `chart-${safeDomId(member.user_id)}-${month.replace("-", "")}`;
+              const metric = selectedMemberChartMetrics[key] || "distance";
+              renderMemberChart(chartId, member.user_id, month, metric);
+            }
+          });
+        });
+      }, 100);
+    }
+
+    function renderMemberChart(chartId, userId, monthKey, metric) {
+      const canvas = document.getElementById(chartId);
+      if (!canvas || !currentData) return;
+
+      const member = (currentData.members || []).find(m => m.user_id === userId);
+      if (!member) return;
+
+      const rides = (member.rides || []).filter(ride => {
+        return monthKeyFromRide(ride) === monthKey;
+      });
+
+      const chartData = buildDailyChartData(rides, metric);
+      const metricInfo = chartMetricInfo(metric, rides);
+      const colors = chartMetricColors(metric);
+      const monthSelectionKey = `${userId}-${monthKey}`;
+
+      selectedMemberChartMetrics[monthSelectionKey] = metric;
+
+      if (memberCharts[chartId]) {
+        memberCharts[chartId].destroy();
+      }
+
+      memberCharts[chartId] = new Chart(canvas, {
+        type: "bar",
+        data: {
+          labels: chartData.labels,
+          datasets: [{
+            label: metricInfo.label,
+            data: chartData.values,
+            borderWidth: 0,
+            borderRadius: 6,
+            backgroundColor: colors.background,
+            hoverBackgroundColor: colors.hover
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          onClick: (_event, elements) => {
+            if (!elements.length) return;
+
+            const index = elements[0].index;
+            const key = chartData.keys[index];
+
+            if (!key) return;
+
+            selectedMemberChartDates[monthSelectionKey] = key;
+
+            renderMembers();
+
+            setTimeout(() => {
+  renderOpenMemberCharts();
+
+  const selectedRide = document.querySelector(
+    `[data-selected-key="${cssEscapeValue(monthSelectionKey)}"]`
+  );
+
+  if (selectedRide) {
+    selectedRide.scrollIntoView({
+      behavior: "smooth",
+      block: "center"
+    });
+  }
+}, 100);
+          },
+          plugins: {
+            legend: {
+              labels: {
+                color: "#9ca3af",
+                font: {
+                  size: 13,
+                  weight: "600"
+                },
+                boxWidth: 10,
+                boxHeight: 10
+              }
+            },
+            tooltip: {
+              backgroundColor: "rgba(13,22,16,0.92)",
+              titleColor: "#f0fdf4",
+              bodyColor: "#9ca3af",
+              borderColor: colors.background,
+              borderWidth: 1,
+              padding: 12,
+              cornerRadius: 10,
+              callbacks: {
+                label: ctx => `${metricInfo.label}: ${formatNumber(ctx.raw, metricInfo.decimals)} ${metricInfo.unit}`
+              }
+            }
+          },
+          scales: {
+            x: {
+              ticks: {
+                color: "#8a958f",
+                font: {
+                  size: 12
+                }
+              },
+              grid: {
+                color: "rgba(255,255,255,0.05)",
+                drawBorder: false
+              }
+            },
+            y: {
+              beginAtZero: true,
+              ticks: {
+                color: "#8a958f",
+                font: {
+                  size: 12
+                },
+                callback: v => `${v}${metricInfo.shortUnit}`
+              },
+              grid: {
+                color: "rgba(255,255,255,0.05)",
+                drawBorder: false
+              }
+            }
+          }
+        }
+      });
+    }
+
+    function buildDailyChartData(rides, metric) {
+      const groups = {};
+
+      rides.forEach(ride => {
+        const key = String(ride.ride_day || ride.ride_date || "").slice(0, 10);
+        if (!key) return;
+
+        if (!groups[key]) groups[key] = [];
+        groups[key].push(ride);
+      });
+
+      const keys = Object.keys(groups).sort();
+
+      return {
+        keys,
+        labels: keys.map(formatChartDay),
+        values: keys.map(k => chartGroupValue(groups[k], metric))
+      };
+    }
+
+    function chartGroupValue(rides, metric) {
+      if (!rides.length) return 0;
+
+      if (metric === "distance") return sum(rides, "distance_value");
+      if (metric === "duration") return rides.reduce((t, r) => t + (Number(r.duration_seconds) || 0), 0) / 3600;
+      if (metric === "benchmark") return average(rides, "personal_benchmark");
+      if (metric === "speed") return average(rides, "average_speed_value");
+      if (metric === "elevation") return sum(rides, "elevation_gain_value");
+      if (metric === "calories") return rides.reduce((t, r) => t + (Number(r.calories) || 0), 0);
+
+      return 0;
+    }
+
+    function chartMetricInfo(metric, rides) {
+      const f = rides[0] || {};
+
+      if (metric === "distance") {
+        return {
+          label: "Distance",
+          unit: f.distance_unit || "",
+          shortUnit: f.distance_unit ? ` ${f.distance_unit}` : "",
+          decimals: 1
+        };
+      }
+
+      if (metric === "duration") {
+        return {
+          label: "Time",
+          unit: "hours",
+          shortUnit: "h",
+          decimals: 1
+        };
+      }
+
+      if (metric === "benchmark") {
+        return {
+          label: "Benchmark",
+          unit: "%",
+          shortUnit: "%",
+          decimals: 1
+        };
+      }
+
+      if (metric === "speed") {
+        return {
+          label: "Average speed",
+          unit: speedUnitLabel(f.speed_unit),
+          shortUnit: f.speed_unit === "kmh" ? " km/h" : f.speed_unit ? ` ${f.speed_unit}` : "",
+          decimals: 1
+        };
+      }
+
+      if (metric === "elevation") {
+        return {
+          label: "Elevation",
+          unit: f.elevation_unit || "",
+          shortUnit: f.elevation_unit ? ` ${f.elevation_unit}` : "",
+          decimals: 0
+        };
+      }
+
+      if (metric === "calories") {
+        return {
+          label: "Calories",
+          unit: "kcal",
+          shortUnit: " kcal",
+          decimals: 0
+        };
+      }
+
+      return {
+        label: "Value",
+        unit: "",
+        shortUnit: "",
+        decimals: 1
+      };
+    }
+
+    function chartMetricColors(metric) {
+      if (metric === "distance") {
+        return {
+          background: "rgba(59,130,246,0.62)",
+          hover: "rgba(96,165,250,0.86)"
+        };
+      }
+
+      if (metric === "benchmark") {
+        return {
+          background: "rgba(34,197,94,0.62)",
+          hover: "rgba(74,222,128,0.86)"
+        };
+      }
+
+      if (metric === "calories") {
+        return {
+          background: "rgba(249,115,22,0.62)",
+          hover: "rgba(251,146,60,0.86)"
+        };
+      }
+
+      if (metric === "speed") {
+        return {
+          background: "rgba(239,68,68,0.62)",
+          hover: "rgba(248,113,113,0.86)"
+        };
+      }
+
+      if (metric === "duration") {
+        return {
+          background: "rgba(21,128,61,0.68)",
+          hover: "rgba(34,197,94,0.88)"
+        };
+      }
+
+      if (metric === "elevation") {
+        return {
+          background: "rgba(146,64,14,0.68)",
+          hover: "rgba(180,83,9,0.88)"
+        };
+      }
+
+      return {
+        background: "rgba(34,197,94,0.55)",
+        hover: "rgba(74,222,128,0.75)"
+      };
+    }
+
+    function destroyMemberCharts() {
+      Object.values(memberCharts).forEach(chart => {
+        if (chart) chart.destroy();
+      });
+
+      memberCharts = {};
     }
 
     function renderError(message) {
@@ -966,6 +1636,15 @@
       if (type === "family") return "Family";
       if (type === "challenge") return "Riding Challenge";
       return "Group";
+    }
+
+    function average(rows, key) {
+      if (!rows.length) return 0;
+      return rows.reduce((s, r) => s + (Number(r[key]) || 0), 0) / rows.length;
+    }
+
+    function sum(rows, key) {
+      return rows.reduce((t, r) => t + (Number(r[key]) || 0), 0);
     }
 
     function safeNumber(v) {
@@ -1023,6 +1702,73 @@
       });
     }
 
+    function formatChartDay(value) {
+      const localDate = localDateFromYMD(value);
+
+      if (localDate) {
+        return localDate.toLocaleDateString(undefined, {
+          month: "short",
+          day: "numeric"
+        });
+      }
+
+      const date = new Date(value);
+
+      if (Number.isNaN(date.getTime())) return value;
+
+      return date.toLocaleDateString(undefined, {
+        month: "short",
+        day: "numeric"
+      });
+    }
+
+    function formatMonthTitle(monthKey) {
+      const localDate = localDateFromYMD(`${monthKey}-01`);
+
+      if (localDate) {
+        return localDate.toLocaleDateString(undefined, {
+          month: "long",
+          year: "numeric"
+        });
+      }
+
+      return monthKey;
+    }
+
+    function localDateFromYMD(value) {
+      if (!value) return null;
+
+      const raw = String(value);
+      const datePart = raw.slice(0, 10);
+      const match = datePart.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+
+      if (!match) return null;
+
+      const year = Number(match[1]);
+      const month = Number(match[2]) - 1;
+      const day = Number(match[3]);
+
+      return new Date(year, month, day);
+    }
+
+    function summaryText(rides) {
+      const rideCount = rides.length;
+      const distance = sum(rides, "distance_value");
+      const calories = rides.reduce((t, r) => t + (Number(r.calories) || 0), 0);
+      const durationSeconds = rides.reduce((t, r) => t + (Number(r.duration_seconds) || 0), 0);
+      const distanceUnit = rides[0]?.distance_unit || "";
+
+      return `${rideCount} ride${rideCount === 1 ? "" : "s"} • ${formatNumber(distance, 1)} ${distanceUnit} • ${Math.round(calories)} kcal • ${formatDuration(durationSeconds)}`;
+    }
+
+    function yearKeyFromRide(ride) {
+      return String(ride.ride_day || ride.ride_date || "").slice(0, 4);
+    }
+
+    function monthKeyFromRide(ride) {
+      return String(ride.ride_day || ride.ride_date || "").slice(0, 7);
+    }
+
     function speedUnitLabel(unit) {
       if (unit === "kmh") return "km/h";
       return unit || "";
@@ -1032,6 +1778,21 @@
       if (!id) return "—";
       return String(id).slice(0, 6);
     }
+
+    function safeDomId(value) {
+      return String(value || "")
+        .replaceAll("-", "")
+        .replaceAll("_", "")
+        .replace(/[^a-zA-Z0-9]/g, "");
+    }
+    
+   function cssEscapeValue(value) {
+  if (window.CSS && typeof window.CSS.escape === "function") {
+    return CSS.escape(String(value));
+  }
+
+  return String(value).replace(/["\\]/g, "\\$&");
+}
 
     function escapeHtml(value) {
       return String(value ?? "")
@@ -1056,6 +1817,11 @@
         currentUser = null;
         currentData = null;
         expandedMembers.clear();
+        expandedMemberYears.clear();
+        expandedMemberMonths.clear();
+        selectedMemberChartDates = {};
+        selectedMemberChartMetrics = {};
+        destroyMemberCharts();
         showLogin();
       }
     });
