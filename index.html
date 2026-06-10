@@ -1422,21 +1422,33 @@
         </div>
 
         <div class="group-actions">
-          <button class="btn-ghost" onclick="toggleGroupMembers('${escapeHtml(group.id)}')">
-            ${isExpanded ? "Hide members" : "View members"}
-          </button>
+  <button class="btn-primary" onclick="openGroupDashboard('${escapeHtml(group.id)}', '${escapeHtml(group.group_type)}')">
+    Open ${escapeHtml(group.name)}
+  </button>
 
-          ${
-            canInvite
-              ? `<button class="btn-ghost" onclick="createGroupInvite('${escapeHtml(group.id)}')">
-                  Create invite
-                </button>`
-              : `<button class="btn-ghost" disabled>Joined</button>`
-          }
-        </div>
+  <button class="btn-ghost" onclick="toggleGroupMembers('${escapeHtml(group.id)}')">
+    ${isExpanded ? "Hide members" : "View members"}
+  </button>
+
+  ${
+    canInvite
+      ? `<button class="btn-ghost" onclick="createGroupInvite('${escapeHtml(group.id)}')">
+          Create invite
+        </button>`
+      : `<button class="btn-ghost" disabled>Joined</button>`
+  }
+</div>
       </article>
     `;
   }).join("");
+}
+
+function openGroupDashboard(groupId, groupType) {
+  const page = groupType === "challenge"
+    ? "challenge.html"
+    : "club.html";
+
+  window.location.href = `${page}?group_id=${encodeURIComponent(groupId)}`;
 }
 
 function toggleGroupMembers(groupId) {
