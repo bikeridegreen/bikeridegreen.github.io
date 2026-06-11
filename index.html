@@ -797,7 +797,17 @@
     .footer-note a:hover {
       text-decoration: underline;
     }
+.form-row.two-cols {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
 
+@media (max-width: 700px) {
+  .form-row.two-cols {
+    grid-template-columns: 1fr;
+  }
+}
     @media (max-width: 900px) {
       .stat-grid {
         grid-template-columns: repeat(3, 1fr);
@@ -959,18 +969,30 @@
           </div>
 
           <div class="field">
-            <label for="groupTypeInput">Group type</label>
-            <select id="groupTypeInput">
-              <option value="club">Club</option>
-              <option value="challenge">Riding Challenge</option>
-              <option value="family">Family</option>
-            </select>
-          </div>
+  <label for="groupTypeInput">Group type</label>
+  <select id="groupTypeInput" onchange="toggleChallengeDateFields()">
+    <option value="club">Club</option>
+    <option value="challenge">Riding Challenge</option>
+    <option value="family">Family</option>
+  </select>
+</div>
 
-          <div class="field">
-            <label for="groupDescriptionInput">Description</label>
-            <input id="groupDescriptionInput" type="text" maxlength="160" placeholder="Optional short description" />
-          </div>
+<div id="challengeDateRow" class="form-row two-cols hidden">
+  <div class="field">
+    <label for="groupStartDateInput">Start date</label>
+    <input id="groupStartDateInput" type="date" />
+  </div>
+
+  <div class="field">
+    <label for="groupEndDateInput">End date</label>
+    <input id="groupEndDateInput" type="date" />
+  </div>
+</div>
+
+<div class="field">
+  <label for="groupDescriptionInput">Description</label>
+  <input id="groupDescriptionInput" type="text" maxlength="160" placeholder="Optional short description" />
+</div>
 
           <div class="settings-actions">
             <button class="btn-primary" onclick="createRideGroup()">Create group</button>
@@ -1283,65 +1305,105 @@
     }
 
     async function createRideGroup() {
-      if (!currentUser) return;
+  if (!currentUser) return;
 
-      const groupStatus = document.getElementById("groupStatus");
-      const nameInput = document.getElementById("groupNameInput");
-      const typeInput = document.getElementById("groupTypeInput");
-      const descriptionInput = document.getElementById("groupDescriptionInput");
+  const groupStatus = document.getElementById("groupStatus");
+  const nameInput = document.getElementById("groupNameInput");
+  const typeInput = document.getElementById("groupTypeInput");
+  const startDateInput = document.getElementById("groupStartDateInput");
+  const endDateInput = document.getElementById("groupEndDateInput");
+  const descriptionInput = document.getElementById("groupDescriptionInput");
 
-      const name = nameInput.value.trim();
-      const groupType = typeInput.value;
-      const description = descriptionInput.value.trim();
+  const name = nameInput.value.trim();
+  const groupType = typeInput.value;
+  const startDate = startDateInput.value;
+  const endDate = endDateInput.value;
+  const description = descriptionInput.value.trim();
 
-      if (!name) {
-        groupStatus.classList.remove("success");
-        groupStatus.textContent = "Please enter a group name.";
-        return;
-      }
+  if (!name) {
+    groupStatus.classList.remove("success");
+    groupStatus.textContent = "Please enter a group name.";
+    return;
+  }
 
-      groupStatus.classList.remove("success");
-      groupStatus.textContent = "Creating group...";
+  if (groupType === "challenge" && (!startDate || !endDate)) {
+    groupStatus.classList.remove("success");
+    groupStatus.textContent = "Please select a start and end date for the challenge.";
+    return;
+  }
 
-      const { data: group, error: groupError } = await client
-        .from("ride_groups")
-        .insert({
-          owner_id: currentUser.id,
-          name,
-          group_type: groupType,
-          description
-        })
-        .select("*")
-        .single();
+  if (startDate && endDate && endDate < startDate) {
+    groupStatus.classList.remove("success");
+    groupStatus.textContent = "End date must be after start date.";
+    return;
+  }
 
-      if (groupError) {
-        groupStatus.classList.remove("success");
-        groupStatus.textContent = groupError.message;
-        return;
-      }
+  groupStatus.classList.remove("success");
+  groupStatus.textContent = "Creating group...";
 
-      const { error: memberError } = await client
-        .from("ride_group_members")
-        .insert({
-          group_id: group.id,
-          user_id: currentUser.id,
-          role: "owner"
-        });
+  const { data: group, error: groupError } = await client
+    .from("ride_groups")
+    .insert({
+  owner_id: currentUser.id,
+  name,
+  group_type: groupType,
+  description: description || null,
+  start_date: groupType === "challenge" ? startDate : null,
+  end_date: groupType === "challenge" ? endDate : null
+})
+    .select("*")
+    .single();
 
-      if (memberError) {
-        groupStatus.classList.remove("success");
-        groupStatus.textContent = memberError.message;
-        return;
-      }
+  if (groupError) {
+    groupStatus.classList.remove("success");
+    groupStatus.textContent = groupError.message;
+    return;
+  }
 
-      nameInput.value = "";
-      descriptionInput.value = "";
+  const { error: memberError } = await client
+    .from("ride_group_members")
+    .insert({
+      group_id: group.id,
+      user_id: currentUser.id,
+      role: "owner"
+    });
 
-      groupStatus.classList.add("success");
-      groupStatus.textContent = "Group created.";
+  if (memberError) {
+    groupStatus.classList.remove("success");
+    groupStatus.textContent = memberError.message;
+    return;
+  }
 
-      await loadGroups();
-    }
+  nameInput.value = "";
+typeInput.value = "club";
+startDateInput.value = "";
+endDateInput.value = "";
+descriptionInput.value = "";
+toggleChallengeDateFields();
+
+  groupStatus.classList.add("success");
+  groupStatus.textContent = "Group created.";
+
+  await loadGroups();
+}
+
+function toggleChallengeDateFields() {
+  const typeInput = document.getElementById("groupTypeInput");
+  const dateRow = document.getElementById("challengeDateRow");
+  const startDateInput = document.getElementById("groupStartDateInput");
+  const endDateInput = document.getElementById("groupEndDateInput");
+
+  if (!typeInput || !dateRow) return;
+
+  const isChallenge = typeInput.value === "challenge";
+
+  dateRow.classList.toggle("hidden", !isChallenge);
+
+  if (!isChallenge) {
+    startDateInput.value = "";
+    endDateInput.value = "";
+  }
+}
 
     function generateInviteCode() {
       const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
@@ -1405,15 +1467,17 @@
   }
 
   allGroups = (data || []).map(group => ({
-    id: group.group_id,
-    name: group.group_name,
-    group_type: group.group_type,
-    description: group.group_description,
-    created_at: group.group_created_at,
-    owner_id: group.owner_id,
-    role: group.my_role,
-    members: group.members || []
-  }));
+  id: group.group_id,
+  name: group.group_name,
+  group_type: group.group_type,
+  description: group.group_description,
+  start_date: group.start_date,
+  end_date: group.end_date,
+  created_at: group.group_created_at,
+  owner_id: group.owner_id,
+  role: group.my_role,
+  members: group.members || []
+}));
 
   renderGroups();
 }
@@ -1453,6 +1517,11 @@
               ? `<div class="group-meta">${escapeHtml(group.description)}</div>`
               : ""
           }
+          ${
+  group.group_type === "challenge" && (group.start_date || group.end_date)
+    ? `<div class="group-meta">Challenge dates: ${escapeHtml(formatDate(group.start_date))} – ${escapeHtml(formatDate(group.end_date))}</div>`
+    : ""
+}
 
           <div class="group-member-count">
             Members: ${memberCount}
