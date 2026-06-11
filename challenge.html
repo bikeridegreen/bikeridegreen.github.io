@@ -324,16 +324,20 @@
     }
 
     .challenge-controls {
-      display: grid;
-      grid-template-columns: 1fr 1fr 1fr auto auto;
-      gap: 12px;
-      align-items: end;
-      margin: 22px 0 24px;
-      padding: 18px;
-      background: rgba(34,197,94,0.04);
-      border: 1px solid var(--border);
-      border-radius: 18px;
-    }
+  display: grid;
+  grid-template-columns: auto minmax(220px, 1fr) auto auto;
+  gap: 12px;
+  align-items: end;
+  margin: 22px 0 24px;
+  padding: 18px;
+  background: rgba(34,197,94,0.04);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+}
+
+.metric-control {
+  min-width: 220px;
+}
 
     .control-label {
       font-size: 11px;
@@ -598,8 +602,9 @@
 
     @media (max-width: 900px) {
       .challenge-controls {
-        grid-template-columns: 1fr 1fr;
-      }
+    grid-template-columns: 1fr;
+    align-items: stretch;
+    }
 
       .member-stats {
         grid-template-columns: repeat(2, 1fr);
@@ -715,32 +720,23 @@
         <div class="dash-header">
           <h2 id="challengeTitle">Challenge dashboard</h2>
           <p id="challengeDescription" class="dash-helper">Loading challenge details...</p>
-          <div id="challengePeriod" class="challenge-period">All uploaded rides</div>
         </div>
 
-        <div class="challenge-controls">
-          <div>
-            <div class="control-label">Start date</div>
-            <input id="startDateInput" type="date" />
-          </div>
+  <div class="challenge-controls">
+  <div id="challengePeriod" class="challenge-period">All uploaded rides</div>
 
-          <div>
-            <div class="control-label">End date</div>
-            <input id="endDateInput" type="date" />
-          </div>
+  <div class="metric-control">
+    <div class="control-label">Ranking metric</div>
+    <select id="metricInput">
+      <option value="distance">Distance</option>
+      <option value="speed">Average speed</option>
+      <option value="elevation">Elevation</option>
+    </select>
+  </div>
 
-          <div>
-            <div class="control-label">Ranking metric</div>
-            <select id="metricInput">
-              <option value="distance">Distance</option>
-              <option value="speed">Average speed</option>
-              <option value="elevation">Elevation</option>
-            </select>
-          </div>
-
-          <button class="btn-primary" onclick="applyChallengeFilters()">Apply</button>
-          <button class="btn-ghost" onclick="copyChallengeLink()">Copy link</button>
-        </div>
+  <button class="btn-primary" onclick="applyChallengeFilters()">Apply</button>
+  <button class="btn-ghost" onclick="copyChallengeLink()">Copy link</button>
+</div>
 
         <div class="chart-card">
           <div class="chart-header">
@@ -757,7 +753,7 @@
 
         <div class="dash-header">
           <h2>Rankings</h2>
-          <p id="rankingHelper" class="dash-helper">Members are ranked using only rides inside the selected date range.</p>
+          <p id="rankingHelper" class="dash-helper">Members are ranked using only rides inside the official challenge dates.</p>
         </div>
 
         <div id="rankingList" class="ranking-list"></div>
@@ -802,8 +798,8 @@
     const params = new URLSearchParams(window.location.search);
     const groupId = params.get("group_id");
 
-    let challengeStart = params.get("start") || "";
-    let challengeEnd = params.get("end") || "";
+    let challengeStart = "";
+    let challengeEnd = "";
     let selectedMetric = params.get("metric") || "distance";
 
     if (!["distance", "speed", "elevation"].includes(selectedMetric)) {
@@ -908,7 +904,14 @@
 
       currentData = data;
 
-      renderChallenge();
+const group = currentData.group || {};
+
+challengeStart = group.start_date ? String(group.start_date).slice(0, 10) : "";
+challengeEnd = group.end_date ? String(group.end_date).slice(0, 10) : "";
+
+syncControlsFromState();
+
+renderChallenge();
     }
 
     function renderChallenge() {
@@ -934,65 +937,44 @@
     }
 
     function syncControlsFromState() {
-      document.getElementById("startDateInput").value = challengeStart;
-      document.getElementById("endDateInput").value = challengeEnd;
       document.getElementById("metricInput").value = selectedMetric;
     }
 
     function applyChallengeFilters() {
-      challengeStart = document.getElementById("startDateInput").value;
-      challengeEnd = document.getElementById("endDateInput").value;
-      selectedMetric = document.getElementById("metricInput").value || "distance";
+  selectedMetric = document.getElementById("metricInput").value || "distance";
 
-      const url = new URL(window.location.href);
+  const url = new URL(window.location.href);
 
-      url.searchParams.set("group_id", groupId);
+  url.searchParams.set("group_id", groupId);
+  url.searchParams.set("metric", selectedMetric);
 
-      if (challengeStart) {
-        url.searchParams.set("start", challengeStart);
-      } else {
-        url.searchParams.delete("start");
-      }
+  // Dates are fixed by the challenge itself, not editable from this page.
+  url.searchParams.delete("start");
+  url.searchParams.delete("end");
 
-      if (challengeEnd) {
-        url.searchParams.set("end", challengeEnd);
-      } else {
-        url.searchParams.delete("end");
-      }
+  window.history.replaceState({}, "", url.toString());
 
-      url.searchParams.set("metric", selectedMetric);
+  renderChallenge();
+}
 
-      window.history.replaceState({}, "", url.toString());
+async function copyChallengeLink() {
+  selectedMetric = document.getElementById("metricInput").value || "distance";
 
-      renderChallenge();
-    }
+  const url = new URL(window.location.href);
 
-    async function copyChallengeLink() {
-      const url = new URL(window.location.href);
+  url.searchParams.set("group_id", groupId);
+  url.searchParams.set("metric", selectedMetric);
 
-      url.searchParams.set("group_id", groupId);
+  url.searchParams.delete("start");
+  url.searchParams.delete("end");
 
-      if (challengeStart) {
-        url.searchParams.set("start", challengeStart);
-      } else {
-        url.searchParams.delete("start");
-      }
-
-      if (challengeEnd) {
-        url.searchParams.set("end", challengeEnd);
-      } else {
-        url.searchParams.delete("end");
-      }
-
-      url.searchParams.set("metric", selectedMetric);
-
-      try {
-        await navigator.clipboard.writeText(url.toString());
-        alert("Challenge link copied.");
-      } catch {
-        alert(url.toString());
-      }
-    }
+  try {
+    await navigator.clipboard.writeText(url.toString());
+    alert("Challenge link copied.");
+  } catch {
+    alert(url.toString());
+  }
+}
 
     function getRankedMembers() {
       const members = currentData?.members || [];
@@ -1157,7 +1139,7 @@
       const metricInfo = challengeMetricInfo(selectedMetric, ranked);
 
       document.getElementById("rankingHelper").textContent =
-        `Ranked by ${metricInfo.label.toLowerCase()} using only rides inside the selected challenge period.`;
+        `Ranked by ${metricInfo.label.toLowerCase()} using only rides inside the official challenge dates.`;
 
       if (!ranked.length) {
         list.innerHTML = `<div class="empty">No members found.</div>`;
