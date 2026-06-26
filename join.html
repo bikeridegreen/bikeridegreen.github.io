@@ -16,12 +16,37 @@
   <style>
     :root {
       --green: #22c55e;
-      --green-light: #4ade80;
+      --green-light: #16a34a;
       --green-dim: #16a34a;
-      --text: #f0fdf4;
-      --muted: #9ca3af;
-      --border-soft: rgba(255,255,255,0.08);
+      --text: #111111;
+      --muted: #6e6e73;
+      --border: #dfe7e2;
+      --border-soft: #e5e5ea;
+      --card: #ffffff;
+      --card-soft: #f8fff9;
       --danger: #ef4444;
+      --page-gradient:
+        radial-gradient(circle at top left, #dcfce7 0, transparent 38%),
+        linear-gradient(180deg, #e8fbea 0%, #f5fff7 45%, #e8fbea 100%);
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --green: #44d965;
+        --green-light: #4ade80;
+        --green-dim: #16a34a;
+        --text: #f0fdf4;
+        --muted: #9ca3af;
+        --border: rgba(34,197,94,0.14);
+        --border-soft: rgba(255,255,255,0.08);
+        --card: #112918;
+        --card-soft: #0c2012;
+        --danger: #ef4444;
+        --page-gradient:
+          radial-gradient(circle at top left, rgba(74,222,128,0.18), transparent 34%),
+          radial-gradient(circle at bottom right, rgba(34,197,94,0.16), transparent 42%),
+          linear-gradient(180deg, #0a2414 0%, #10351f 48%, #092817 100%);
+      }
     }
 
     *, *::before, *::after {
@@ -31,20 +56,23 @@
     body {
       margin: 0;
       font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-      background:
-        radial-gradient(circle at top left, rgba(74,222,128,0.18), transparent 34%),
-        radial-gradient(circle at bottom right, rgba(34,197,94,0.16), transparent 42%),
-        linear-gradient(180deg, #0a2414 0%, #10351f 48%, #092817 100%);
+      background: var(--page-gradient);
       color: var(--text);
       min-height: 100vh;
       -webkit-font-smoothing: antialiased;
     }
 
     header {
-      border-bottom: 1px solid rgba(34,197,94,0.20);
-      background: rgba(8,31,17,0.84);
+      border-bottom: 1px solid var(--border);
+      background: rgba(255,255,255,0.72);
       backdrop-filter: blur(20px);
       -webkit-backdrop-filter: blur(20px);
+    }
+
+    @media (prefers-color-scheme: dark) {
+      header {
+        background: rgba(8,31,17,0.84);
+      }
     }
 
     .header-inner {
@@ -63,8 +91,8 @@
       border-radius: 12px;
       overflow: hidden;
       flex-shrink: 0;
-      border: 1px solid rgba(34,197,94,0.3);
-      background: #0d1f10;
+      border: 1px solid var(--border);
+      background: var(--card-soft);
     }
 
     .logo img {
@@ -95,12 +123,11 @@
     .card {
       max-width: 520px;
       margin: 0 auto;
-      background:
-        linear-gradient(180deg, rgba(17,41,24,0.96), rgba(12,32,18,0.96));
-      border: 1px solid rgba(34,197,94,0.22);
+      background: var(--card);
+      border: 1px solid var(--border);
       border-radius: 24px;
       padding: 34px;
-      box-shadow: 0 18px 60px rgba(0,0,0,0.22);
+      box-shadow: 0 18px 60px rgba(0,0,0,0.10);
     }
 
     .eyebrow {
@@ -141,8 +168,8 @@
     }
 
     .invite-box {
-      background: rgba(34,197,94,0.06);
-      border: 1px solid rgba(34,197,94,0.18);
+      background: var(--card-soft);
+      border: 1px solid var(--border);
       border-radius: 16px;
       padding: 16px;
       margin-bottom: 22px;
@@ -183,7 +210,7 @@
       padding: 13px 16px;
       border-radius: 12px;
       border: 1px solid var(--border-soft);
-      background: rgba(255,255,255,0.04);
+      background: var(--card-soft);
       color: var(--text);
       font-size: 15px;
       font-family: inherit;
@@ -229,8 +256,8 @@
 
     .btn-ghost {
       margin-top: 10px;
-      background: transparent;
-      color: var(--muted);
+      background: var(--card-soft);
+      color: var(--text);
       border: 1px solid var(--border-soft);
     }
 
