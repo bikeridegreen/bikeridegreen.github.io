@@ -476,6 +476,15 @@
       margin: 20px 0;
     }
 
+    .activity-filter-row {
+      margin: 20px 0 10px;
+    }
+
+    .activity-filter-row select {
+      width: 220px;
+      max-width: 100%;
+    }
+
     .search-wrap {
       position: relative;
     }
@@ -959,6 +968,7 @@
       <div id="signedInActions" class="top-actions hidden">
         <div id="userDisplayName" class="user-pill"></div>
         <button class="btn-ghost" onclick="toggleSettings()">Settings</button>
+        <button class="btn-ghost" onclick="openNutrition()">Nutrition</button>
         <button class="btn-ghost" onclick="refreshDashboard()">Refresh</button>
         <button class="btn-danger-soft" onclick="signOut()">Sign out</button>
       </div>
@@ -1054,13 +1064,13 @@
         </div>
 
         <div class="dash-header">
-          <h2 id="dashboardTitle">My ride dashboard</h2>
-          <p class="dash-helper">Uploaded summaries from the Bike Ride Green app.</p>
+          <h2 id="dashboardTitle">My activity dashboard</h2>
+          <p class="dash-helper">Your uploaded rides, runs, and walks in one private view.</p>
         </div>
 
         <div class="stat-grid">
           <div class="stat">
-            <div class="stat-label">Rides</div>
+            <div class="stat-label">Activities</div>
             <div id="statRides" class="stat-value accent">0</div>
           </div>
 
@@ -1085,7 +1095,7 @@
           </div>
 
           <div class="stat">
-            <div class="stat-label">Average benchmark</div>
+            <div class="stat-label">Average score</div>
             <div id="statBenchmark" class="stat-value accent">0%</div>
           </div>
         </div>
@@ -1102,6 +1112,12 @@
         </div>
 
         <hr class="section-divider" />
+
+        <div class="activity-filter-row">
+          <select id="activityTypeFilter" onchange="selectedChartDate = ''; renderRides()">
+            <option value="">All activities</option>
+          </select>
+        </div>
 
         <div class="controls">
           <div class="search-wrap">
@@ -1142,6 +1158,7 @@
               <option value="duration">Time</option>
               <option value="benchmark">Benchmark</option>
               <option value="speed">Average speed</option>
+              <option value="pace">Average pace</option>
               <option value="elevation">Elevation</option>
               <option value="calories">Calories</option>
             </select>
@@ -1276,7 +1293,7 @@
         displayNameInput.value = "";
 
         if (dashboardTitle) {
-          dashboardTitle.textContent = "My ride dashboard";
+          dashboardTitle.textContent = "My activity dashboard";
         }
 
         return;
@@ -1291,8 +1308,8 @@
 
       if (dashboardTitle) {
         dashboardTitle.textContent = displayName
-          ? `${displayName}'s ride dashboard`
-          : "My ride dashboard";
+          ? `${displayName}'s activity dashboard`
+          : "My activity dashboard";
       }
     }
 
@@ -1348,8 +1365,8 @@
 
       if (dashboardTitle) {
         dashboardTitle.textContent = data.display_name
-          ? `${data.display_name}'s ride dashboard`
-          : "My ride dashboard";
+          ? `${data.display_name}'s activity dashboard`
+          : "My activity dashboard";
       }
 
       settingsStatus.classList.add("success");
@@ -1678,19 +1695,37 @@ function groupMemberHTML(member, group) {
     async function loadRides() {
       if (!currentUser) return;
 
-      const { data, error } = await client
-        .from("rides")
-        .select("*")
-        .eq("user_id", currentUser.id)
-        .order("ride_date", { ascending: false });
+      const [bikeResult, runResult] = await Promise.all([
+        client.from("rides").select("*").eq("user_id", currentUser.id),
+        client.from("run_activities").select("*").eq("user_id", currentUser.id)
+      ]);
 
-      if (error) {
+      if (bikeResult.error || runResult.error) {
+        const error = bikeResult.error || runResult.error;
         document.getElementById("ridesList").innerHTML =
-          `<div class="empty">Could not load rides: ${escapeHtml(error.message)}</div>`;
+          `<div class="empty">Could not load activities: ${escapeHtml(error.message)}</div>`;
         return;
       }
 
-      allRides = data || [];
+      const bikeActivities = (bikeResult.data || []).map(ride => ({
+        ...ride,
+        portal_activity_type: "bike"
+      }));
+
+      const runActivities = (runResult.data || []).map(activity => ({
+        ...activity,
+        ride_day: activity.activity_day || activity.activity_date,
+        ride_date: activity.activity_date,
+        portal_activity_type: activity.activity_type === "walk" ? "walk" : "run",
+        personal_benchmark: activity.activity_score,
+        local_ride_id: activity.local_activity_id
+      }));
+
+      allRides = [...bikeActivities, ...runActivities].sort((a, b) =>
+        String(b.ride_day || b.ride_date || "")
+          .localeCompare(String(a.ride_day || a.ride_date || ""))
+      );
+      populateActivityTypeFilter();
       populateYearFilter();
       renderRides();
     }
@@ -1741,9 +1776,11 @@ async function deleteRideGroup(groupId, groupName) {
       const search = document.getElementById("searchInput").value.trim().toLowerCase();
       const year = document.getElementById("yearFilter").value;
       const month = document.getElementById("monthFilter").value;
+      const activityType = document.getElementById("activityTypeFilter").value;
 
       let rides = [...allRides];
 
+      if (activityType) rides = rides.filter(r => (r.portal_activity_type || "bike") === activityType);
       if (year) rides = rides.filter(r => (r.ride_day || "").slice(0, 4) === year);
       if (month) rides = rides.filter(r => (r.ride_day || "").slice(5, 7) === month);
 
@@ -1776,15 +1813,15 @@ if (selectedChartDate) {
 }
 
 if (!visibleRides.length) {
-  ridesList.innerHTML = `<div class="empty">No rides found.</div>`;
+  ridesList.innerHTML = `<div class="empty">No activities found.</div>`;
   return;
 }
 
 if (selectedChartDate) {
   ridesList.innerHTML = `
     <div class="selected-date-toolbar">
-      <span>Showing ride for ${escapeHtml(formatDate(selectedChartDate))}</span>
-      <button class="btn-ghost" onclick="clearSelectedChartDate()">Show all rides</button>
+      <span>Showing activity for ${escapeHtml(formatDate(selectedChartDate))}</span>
+      <button class="btn-ghost" onclick="clearSelectedChartDate()">Show all activities</button>
     </div>
     ${visibleRides.map(ride => rideCardHTML(ride, true)).join("")}
   `;
@@ -1934,6 +1971,7 @@ ridesList.innerHTML = visibleRides.map(ride => rideCardHTML(ride)).join("");
       const benchmark = safeNumber(ride.personal_benchmark);
       const distance = safeNumber(ride.distance_value);
       const avgSpeed = safeNumber(ride.average_speed_value);
+      const avgPace = safeNumber(ride.average_pace_seconds);
       const elevation = safeNumber(ride.elevation_gain_value);
       const calories = ride.calories ?? 0;
       const duration = formatDuration(ride.duration_seconds || 0);
@@ -1942,11 +1980,11 @@ ridesList.innerHTML = visibleRides.map(ride => rideCardHTML(ride)).join("");
         <article class="ride-card ${isSelected ? "selected-ride" : ""}">
           <div>
             <div class="ride-date">${escapeHtml(date)}</div>
-            <div class="ride-small">ID: ${escapeHtml(shortId(ride.local_ride_id || ride.id))}</div>
+            <div class="ride-small">${escapeHtml(activityTypeLabel(ride.portal_activity_type))} • ID: ${escapeHtml(shortId(ride.local_ride_id || ride.id))}</div>
           </div>
 
           <div>
-            <div class="metric-label">Benchmark</div>
+            <div class="metric-label">${escapeHtml(activityTypeLabel(ride.portal_activity_type))} Activity Score</div>
             <div class="metric-value green">${formatNumber(benchmark, 1)}%</div>
           </div>
 
@@ -1956,8 +1994,10 @@ ridesList.innerHTML = visibleRides.map(ride => rideCardHTML(ride)).join("");
           </div>
 
           <div>
-            <div class="metric-label">Avg speed</div>
-            <div class="metric-value">${formatNumber(avgSpeed, 1)} ${escapeHtml(speedUnitLabel(ride.speed_unit))}</div>
+            <div class="metric-label">${ride.portal_activity_type === "bike" ? "Average speed" : "Average pace"}</div>
+            <div class="metric-value">${ride.portal_activity_type === "bike"
+              ? `${formatNumber(avgSpeed, 1)} ${escapeHtml(speedUnitLabel(ride.speed_unit))}`
+              : escapeHtml(formatPace(avgPace, ride.pace_unit))}</div>
           </div>
 
           <div>
@@ -2017,6 +2057,13 @@ ridesList.innerHTML = visibleRides.map(ride => rideCardHTML(ride)).join("");
         return {
           background: "rgba(239,68,68,0.62)",
           hover: "rgba(248,113,113,0.86)"
+        };
+      }
+
+      if (metric === "pace") {
+        return {
+          background: "rgba(168,85,247,0.62)",
+          hover: "rgba(192,132,252,0.86)"
         };
       }
 
@@ -2126,7 +2173,9 @@ ridesList.innerHTML = visibleRides.map(ride => rideCardHTML(ride)).join("");
               padding: 12,
               cornerRadius: 10,
               callbacks: {
-                label: ctx => `${metricInfo.label}: ${formatNumber(ctx.raw, metricInfo.decimals)} ${metricInfo.unit}`
+                label: ctx => metric === "pace"
+                  ? `${metricInfo.label}: ${formatPace(ctx.raw, metricInfo.unit)}`
+                  : `${metricInfo.label}: ${formatNumber(ctx.raw, metricInfo.decimals)} ${metricInfo.unit}`
               }
             }
           },
@@ -2150,7 +2199,9 @@ ridesList.innerHTML = visibleRides.map(ride => rideCardHTML(ride)).join("");
                 font: {
                   size: 12
                 },
-                callback: v => `${v}${metricInfo.shortUnit}`
+                callback: v => metric === "pace"
+                  ? formatPace(v, metricInfo.unit)
+                  : `${v}${metricInfo.shortUnit}`
               },
               grid: {
                 color: "rgba(255,255,255,0.05)",
@@ -2191,7 +2242,8 @@ ridesList.innerHTML = visibleRides.map(ride => rideCardHTML(ride)).join("");
       if (metric === "distance") return sum(rides, "distance_value");
       if (metric === "duration") return rides.reduce((t, r) => t + (Number(r.duration_seconds) || 0), 0) / 3600;
       if (metric === "benchmark") return average(rides, "personal_benchmark");
-      if (metric === "speed") return average(rides, "average_speed_value");
+      if (metric === "speed") return averagePositive(rides, "average_speed_value");
+      if (metric === "pace") return averagePositive(rides, "average_pace_seconds");
       if (metric === "elevation") return sum(rides, "elevation_gain_value");
       if (metric === "calories") return rides.reduce((t, r) => t + (Number(r.calories) || 0), 0);
       return 0;
@@ -2236,6 +2288,15 @@ ridesList.innerHTML = visibleRides.map(ride => rideCardHTML(ride)).join("");
         };
       }
 
+      if (metric === "pace") {
+        return {
+          label: "Average pace",
+          unit: f.pace_unit || "min/km",
+          shortUnit: " sec",
+          decimals: 0
+        };
+      }
+
       if (metric === "elevation") {
         return {
           label: "Elevation",
@@ -2265,6 +2326,11 @@ ridesList.innerHTML = visibleRides.map(ride => rideCardHTML(ride)).join("");
     function average(rows, key) {
       if (!rows.length) return 0;
       return rows.reduce((s, r) => s + (Number(r[key]) || 0), 0) / rows.length;
+    }
+
+    function averagePositive(rows, key) {
+      const values = rows.map(row => Number(row[key])).filter(value => value > 0);
+      return values.length ? values.reduce((sum, value) => sum + value, 0) / values.length : 0;
     }
 
     function localDateFromYMD(value) {
@@ -2337,6 +2403,30 @@ function formatChartMonth(value) {
         years.map(y => `<option value="${y}">${y}</option>`).join("");
 
       if (years.includes(existing)) yearFilter.value = existing;
+    }
+
+    function populateActivityTypeFilter() {
+      const filter = document.getElementById("activityTypeFilter");
+      if (!filter) return;
+
+      const existing = filter.value;
+      const available = ["bike", "run", "walk"].filter(type =>
+        allRides.some(activity => (activity.portal_activity_type || "bike") === type)
+      );
+      const labels = { bike: "Rides", run: "Runs", walk: "Walks" };
+      const options = available.length > 1
+        ? ['<option value="">All activities</option>']
+        : [];
+
+      available.forEach(type => {
+        options.push(`<option value="${type}">${labels[type]}</option>`);
+      });
+
+      filter.innerHTML = options.join("");
+      filter.value = available.includes(existing)
+        ? existing
+        : (available.length === 1 ? available[0] : "");
+      filter.classList.toggle("hidden", available.length < 2);
     }
 
     async function showDashboard(user) {
@@ -2468,6 +2558,24 @@ function formatChartMonth(value) {
     function speedUnitLabel(unit) {
       if (unit === "kmh") return "km/h";
       return unit || "";
+    }
+
+    function activityTypeLabel(type) {
+      if (type === "run") return "Run";
+      if (type === "walk") return "Walk";
+      return "Ride";
+    }
+
+    function formatPace(totalSeconds, unit) {
+      const seconds = Number(totalSeconds);
+      if (!Number.isFinite(seconds) || seconds <= 0) return "—";
+      const minutes = Math.floor(seconds / 60);
+      const remainder = Math.round(seconds % 60).toString().padStart(2, "0");
+      return `${minutes}:${remainder} ${unit || "min/km"}`;
+    }
+
+    function openNutrition() {
+      window.location.href = "https://run.thegreenportfolio.ca/nutrition.html";
     }
 
     function shortId(id) {
