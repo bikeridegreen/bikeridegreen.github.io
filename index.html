@@ -1219,6 +1219,7 @@
 
       if (session && session.user) {
         currentUser = session.user;
+        await ensureProfileEmail(session.user);
         await showDashboard(session.user);
         await refreshDashboard();
       } else {
@@ -1251,6 +1252,7 @@
       }
 
       currentUser = data.user;
+      await ensureProfileEmail(data.user);
       await showDashboard(data.user);
       await refreshDashboard();
     }
@@ -1375,6 +1377,7 @@
 
     async function createRideGroup() {
   if (!currentUser) return;
+  await ensureProfileEmail(currentUser);
 
   const groupStatus = document.getElementById("groupStatus");
   const nameInput = document.getElementById("groupNameInput");
@@ -2592,13 +2595,27 @@ function formatChartMonth(value) {
         .replaceAll("'", "&#039;");
     }
 
+    async function ensureProfileEmail(user) {
+      if (!user?.id) return;
+
+      const { error } = await client
+        .from("profiles")
+        .upsert({
+          id: user.id,
+          email: user.email || null
+        }, { onConflict: "id" });
+
+      if (error) console.error("Could not prepare profile:", error.message);
+    }
+
     checkSession();
 
     client.auth.onAuthStateChange((_event, session) => {
       if (session && session.user) {
         currentUser = session.user;
 
-        showDashboard(session.user).then(async () => {
+        ensureProfileEmail(session.user).then(async () => {
+          await showDashboard(session.user);
           await refreshDashboard();
         });
       } else {
