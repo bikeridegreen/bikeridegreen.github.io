@@ -681,6 +681,14 @@
       text-decoration: none;
     }
 
+    /* Keep nested cards and chart content inside narrow phone viewports. */
+    .card, .member-card, .year-group, .month-group, .chart-card,
+    .member-top > div, .chart-header > div, .brand-text { min-width: 0; }
+    .year-header > div:first-child, .month-header > div:first-child { min-width: 0; flex: 1 1 auto; }
+    .year-summary, .month-summary, .member-name, .dash-helper { overflow-wrap: anywhere; white-space: normal; }
+    .year-chevron, .month-chevron { flex: 0 0 auto; }
+    .stat-value, .mini-value, .metric-value { overflow-wrap: anywhere; }
+    .chart-wrap { min-width: 0; width: 100%; }
     @media (max-width: 900px) {
       .stat-grid,
       .member-stats {
@@ -995,13 +1003,13 @@
         Number(totals.ride_count || 0);
 
       document.getElementById("clubDistance").textContent =
-        `${formatNumber(totals.distance, 1)} ${totals.distance_unit || ""}`;
+        `${formatNumber(totalDistanceKm(totals), 1)} km`;
 
       document.getElementById("clubCalories").textContent =
         `${Math.round(Number(totals.calories) || 0)} kcal`;
 
       document.getElementById("clubElevation").textContent =
-        `${formatNumber(totals.elevation, 0)} ${totals.elevation_unit || ""}`;
+        `${formatNumber(totalElevationM(totals), 0)} m`;
 
       document.getElementById("clubDuration").textContent =
         formatDuration(totals.duration_seconds || 0);
@@ -1053,17 +1061,17 @@
 
             <div class="mini-stat">
               <div class="mini-label">Distance</div>
-              <div class="mini-value">${formatNumber(totals.distance, 1)} ${escapeHtml(totals.distance_unit || "")}</div>
+              <div class="mini-value">${formatNumber(totalDistanceKm(totals), 1)} km</div>
             </div>
 
             <div class="mini-stat">
               <div class="mini-label">Avg speed</div>
-              <div class="mini-value">${formatNumber(totals.avg_speed, 1)} ${escapeHtml(speedUnitLabel(totals.speed_unit))}</div>
+              <div class="mini-value">${formatNumber(totalSpeedKmh(totals), 1)} km/h</div>
             </div>
 
             <div class="mini-stat">
               <div class="mini-label">Elevation</div>
-              <div class="mini-value">${formatNumber(totals.elevation, 0)} ${escapeHtml(totals.elevation_unit || "")}</div>
+              <div class="mini-value">${formatNumber(totalElevationM(totals), 0)} m</div>
             </div>
 
             <div class="mini-stat">
@@ -1216,9 +1224,9 @@
     function rideCardHTML(ride, isSelected = false, selectedKey = "") {
       const date = formatDate(ride.ride_day || ride.ride_date);
       const benchmark = safeNumber(ride.personal_benchmark);
-      const distance = safeNumber(ride.distance_value);
-      const avgSpeed = safeNumber(ride.average_speed_value);
-      const elevation = safeNumber(ride.elevation_gain_value);
+      const distance = distanceKm(ride.distance_value, ride.distance_unit);
+      const avgSpeed = speedKmh(ride.average_speed_value, ride.speed_unit);
+      const elevation = elevationM(ride.elevation_gain_value, ride.elevation_unit);
       const calories = ride.calories ?? 0;
       const duration = formatDuration(ride.duration_seconds || 0);
 
@@ -1236,17 +1244,17 @@
 
           <div>
             <div class="metric-label">Distance</div>
-            <div class="metric-value">${formatNumber(distance, 2)} ${escapeHtml(ride.distance_unit || "")}</div>
+            <div class="metric-value">${formatNumber(distance, 2)} km</div>
           </div>
 
           <div>
             <div class="metric-label">Avg speed</div>
-            <div class="metric-value">${formatNumber(avgSpeed, 1)} ${escapeHtml(speedUnitLabel(ride.speed_unit))}</div>
+            <div class="metric-value">${formatNumber(avgSpeed, 1)} km/h</div>
           </div>
 
           <div>
             <div class="metric-label">Elevation</div>
-            <div class="metric-value">${formatNumber(elevation, 0)} ${escapeHtml(ride.elevation_unit || "")}</div>
+            <div class="metric-value">${formatNumber(elevation, 0)} m</div>
           </div>
 
           <div>
@@ -1491,11 +1499,11 @@
     function chartGroupValue(rides, metric) {
       if (!rides.length) return 0;
 
-      if (metric === "distance") return sum(rides, "distance_value");
+      if (metric === "distance") return ridesDistanceKm(rides);
       if (metric === "duration") return rides.reduce((t, r) => t + (Number(r.duration_seconds) || 0), 0) / 3600;
       if (metric === "benchmark") return average(rides, "personal_benchmark");
-      if (metric === "speed") return average(rides, "average_speed_value");
-      if (metric === "elevation") return sum(rides, "elevation_gain_value");
+      if (metric === "speed") return ridesSpeedKmh(rides);
+      if (metric === "elevation") return ridesElevationM(rides);
       if (metric === "calories") return rides.reduce((t, r) => t + (Number(r.calories) || 0), 0);
 
       return 0;
@@ -1507,8 +1515,8 @@
       if (metric === "distance") {
         return {
           label: "Distance",
-          unit: f.distance_unit || "",
-          shortUnit: f.distance_unit ? ` ${f.distance_unit}` : "",
+          unit: "km",
+          shortUnit: " km",
           decimals: 1
         };
       }
@@ -1534,8 +1542,8 @@
       if (metric === "speed") {
         return {
           label: "Average speed",
-          unit: speedUnitLabel(f.speed_unit),
-          shortUnit: f.speed_unit === "kmh" ? " km/h" : f.speed_unit ? ` ${f.speed_unit}` : "",
+          unit: "km/h",
+          shortUnit: " km/h",
           decimals: 1
         };
       }
@@ -1543,8 +1551,8 @@
       if (metric === "elevation") {
         return {
           label: "Elevation",
-          unit: f.elevation_unit || "",
-          shortUnit: f.elevation_unit ? ` ${f.elevation_unit}` : "",
+          unit: "m",
+          shortUnit: " m",
           decimals: 0
         };
       }
@@ -1667,6 +1675,41 @@
       return "Group";
     }
 
+    // Normalize every ride before aggregating; never add raw values with mixed units.
+    function unitKey(unit) { return String(unit || "").trim().toLowerCase().replace(/\s+/g, ""); }
+    function distanceKm(value, unit) {
+      const u = unitKey(unit);
+      const n = safeNumber(value);
+      if (["mi", "mile", "miles"].includes(u)) return n * 1.609344;
+      if (["m", "meter", "meters", "metre", "metres"].includes(u)) return n / 1000;
+      return n; // App default: kilometres when unit is absent.
+    }
+    function elevationM(value, unit) {
+      const u = unitKey(unit);
+      const n = safeNumber(value);
+      return ["ft", "foot", "feet"].includes(u) ? n * 0.3048 : n;
+    }
+    function speedKmh(value, unit) {
+      const u = unitKey(unit);
+      const n = safeNumber(value);
+      if (["mph", "mi/h", "miles/hour", "milesperhour"].includes(u)) return n * 1.609344;
+      if (["m/s", "mps"].includes(u)) return n * 3.6;
+      return n;
+    }
+    function ridesDistanceKm(rides) { return rides.reduce((t, r) => t + distanceKm(r.distance_value, r.distance_unit), 0); }
+    function ridesElevationM(rides) { return rides.reduce((t, r) => t + elevationM(r.elevation_gain_value, r.elevation_unit), 0); }
+    function ridesDurationSeconds(rides) { return rides.reduce((t, r) => t + Math.max(0, safeNumber(r.duration_seconds)), 0); }
+    function ridesSpeedKmh(rides) {
+      // Use duration-weighted speeds to avoid treating a short ride like a long ride.
+      const valid = rides.filter(r => safeNumber(r.duration_seconds) > 0 && Number.isFinite(Number(r.average_speed_value)) && Number(r.average_speed_value) >= 0);
+      const seconds = ridesDurationSeconds(valid);
+      if (seconds > 0) return valid.reduce((t, r) => t + speedKmh(r.average_speed_value, r.speed_unit) * safeNumber(r.duration_seconds), 0) / seconds;
+      return rides.length ? rides.reduce((t, r) => t + speedKmh(r.average_speed_value, r.speed_unit), 0) / rides.length : 0;
+    }
+    function totalDistanceKm(totals) { return distanceKm(totals.distance, totals.distance_unit); }
+    function totalElevationM(totals) { return elevationM(totals.elevation, totals.elevation_unit); }
+    function totalSpeedKmh(totals) { return speedKmh(totals.avg_speed, totals.speed_unit); }
+
     function average(rows, key) {
       if (!rows.length) return 0;
       return rows.reduce((s, r) => s + (Number(r[key]) || 0), 0) / rows.length;
@@ -1782,10 +1825,10 @@
 
     function summaryText(rides) {
       const rideCount = rides.length;
-      const distance = sum(rides, "distance_value");
+      const distance = ridesDistanceKm(rides);
       const calories = rides.reduce((t, r) => t + (Number(r.calories) || 0), 0);
       const durationSeconds = rides.reduce((t, r) => t + (Number(r.duration_seconds) || 0), 0);
-      const distanceUnit = rides[0]?.distance_unit || "";
+      const distanceUnit = "km";
 
       return `${rideCount} ride${rideCount === 1 ? "" : "s"} • ${formatNumber(distance, 1)} ${distanceUnit} • ${Math.round(calories)} kcal • ${formatDuration(durationSeconds)}`;
     }
