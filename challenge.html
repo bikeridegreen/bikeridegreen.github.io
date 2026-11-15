@@ -62,6 +62,8 @@
       box-sizing: border-box;
     }
 
+    html, body { width: 100%; max-width: 100%; overflow-x: clip; }
+
     body {
       margin: 0;
       font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
@@ -477,6 +479,9 @@
       border-color: rgba(251,146,60,0.7);
     }
 
+    .ranking-card > *, .member-top > *, .chart-header > * { min-width: 0; }
+    .rank-name, .rank-meta, .rank-value, .member-name, .member-meta { overflow-wrap: anywhere; }
+
     .rank-name {
       font-size: 17px;
       font-weight: 800;
@@ -682,6 +687,8 @@
         grid-template-columns: 1fr;
       }
 
+      .top-actions { flex-wrap: wrap; }
+      .user-pill { max-width: 100%; }
       .top-actions button,
       .button-row button {
         width: 100%;
@@ -1034,28 +1041,67 @@ async function copyChallengeLink() {
       });
     }
 
+    // Challenge rankings use a single metric system regardless of each rider's settings.
+    // Unknown units are excluded from the relevant metric rather than silently mislabelled.
+    function normalizedDistanceKm(value, unit) {
+      const n = Number(value);
+      if (!Number.isFinite(n) || n < 0) return null;
+      const u = String(unit || "").trim().toLowerCase();
+      if (["km", "kilometer", "kilometers", "kilometre", "kilometres"].includes(u)) return n;
+      if (["mi", "mile", "miles"].includes(u)) return n * 1.609344;
+      if (["m", "meter", "meters", "metre", "metres"].includes(u)) return n / 1000;
+      return null;
+    }
+
+    function normalizedElevationM(value, unit) {
+      const n = Number(value);
+      if (!Number.isFinite(n) || n < 0) return null;
+      const u = String(unit || "").trim().toLowerCase();
+      if (["m", "meter", "meters", "metre", "metres"].includes(u)) return n;
+      if (["ft", "foot", "feet"].includes(u)) return n * 0.3048;
+      return null;
+    }
+
+    function normalizedSpeedKmh(value, unit) {
+      const n = Number(value);
+      if (!Number.isFinite(n) || n < 0) return null;
+      const u = String(unit || "").trim().toLowerCase().replace(/\s/g, "");
+      if (["kmh", "km/h", "kph"].includes(u)) return n;
+      if (["mph", "mi/h"].includes(u)) return n * 1.609344;
+      if (["m/s", "mps"].includes(u)) return n * 3.6;
+      return null;
+    }
+
+    function sumKnown(values) {
+      return values.reduce((total, value) => total + (value ?? 0), 0);
+    }
+
     function calculateChallengeTotals(rides) {
       const rideCount = rides.length;
-      const distance = sum(rides, "distance_value");
-      const elevation = sum(rides, "elevation_gain_value");
+      const distances = rides.map(r => normalizedDistanceKm(r.distance_value, r.distance_unit));
+      const elevations = rides.map(r => normalizedElevationM(r.elevation_gain_value, r.elevation_unit));
+      const speeds = rides.map(r => normalizedSpeedKmh(r.average_speed_value, r.speed_unit));
+      const distance = sumKnown(distances);
+      const elevation = sumKnown(elevations);
       const calories = rides.reduce((t, r) => t + (Number(r.calories) || 0), 0);
       const durationSeconds = rides.reduce((t, r) => t + (Number(r.duration_seconds) || 0), 0);
-      const avgSpeed = average(rides, "average_speed_value");
+      // Distance / duration is an overall speed only when duration is the matching
+      // riding duration for each ride. Otherwise use a duration-weighted mean of
+      // stored average speeds, which avoids weighting a 5-minute ride like a 5-hour ride.
+      const weightedSpeeds = rides.map((r, i) => ({
+        speed: speeds[i], duration: Number(r.duration_seconds)
+      })).filter(r => r.speed !== null && Number.isFinite(r.duration) && r.duration > 0);
+      const weightedSeconds = weightedSpeeds.reduce((t, r) => t + r.duration, 0);
+      const avgSpeed = weightedSeconds > 0
+        ? weightedSpeeds.reduce((t, r) => t + r.speed * r.duration, 0) / weightedSeconds
+        : (speeds.filter(v => v !== null).length
+          ? sumKnown(speeds) / speeds.filter(v => v !== null).length : 0);
       const bestBenchmark = rides.length
-        ? Math.max(...rides.map(r => Number(r.personal_benchmark) || 0))
-        : 0;
+        ? Math.max(...rides.map(r => Number(r.personal_benchmark) || 0)) : 0;
 
       return {
-        rideCount,
-        distance,
-        elevation,
-        calories,
-        durationSeconds,
-        avgSpeed,
-        bestBenchmark,
-        distanceUnit: rides[0]?.distance_unit || "",
-        elevationUnit: rides[0]?.elevation_unit || "",
-        speedUnit: rides[0]?.speed_unit || ""
+        rideCount, distance, elevation, calories, durationSeconds, avgSpeed,
+        bestBenchmark, distanceUnit: "km", elevationUnit: "m", speedUnit: "kmh"
       };
     }
 
@@ -1273,9 +1319,9 @@ async function copyChallengeLink() {
     function rideCardHTML(ride) {
       const date = formatDate(ride.ride_day || ride.ride_date);
       const benchmark = safeNumber(ride.personal_benchmark);
-      const distance = safeNumber(ride.distance_value);
-      const avgSpeed = safeNumber(ride.average_speed_value);
-      const elevation = safeNumber(ride.elevation_gain_value);
+      const distance = normalizedDistanceKm(ride.distance_value, ride.distance_unit);
+      const avgSpeed = normalizedSpeedKmh(ride.average_speed_value, ride.speed_unit);
+      const elevation = normalizedElevationM(ride.elevation_gain_value, ride.elevation_unit);
       const calories = ride.calories ?? 0;
       const duration = formatDuration(ride.duration_seconds || 0);
 
@@ -1293,17 +1339,17 @@ async function copyChallengeLink() {
 
           <div>
             <div class="metric-label">Distance</div>
-            <div class="metric-value">${formatNumber(distance, 2)} ${escapeHtml(ride.distance_unit || "")}</div>
+            <div class="metric-value">${distance === null ? "—" : `${formatNumber(distance, 2)} km`}</div>
           </div>
 
           <div>
             <div class="metric-label">Avg speed</div>
-            <div class="metric-value">${formatNumber(avgSpeed, 1)} ${escapeHtml(speedUnitLabel(ride.speed_unit))}</div>
+            <div class="metric-value">${avgSpeed === null ? "—" : `${formatNumber(avgSpeed, 1)} km/h`}</div>
           </div>
 
           <div>
             <div class="metric-label">Elevation</div>
-            <div class="metric-value">${formatNumber(elevation, 0)} ${escapeHtml(ride.elevation_unit || "")}</div>
+            <div class="metric-value">${elevation === null ? "—" : `${formatNumber(elevation, 0)} m`}</div>
           </div>
 
           <div>
