@@ -970,6 +970,78 @@
         text-align: center;
       }
     }
+
+    /* Mobile layout and expandable activity summaries */
+    .header-inner, .brand, .brand-text, .top-actions,
+    main, .card, .chart-card, .chart-header, .chart-header > div,
+    .rides-list, .year-group, .month-group, .year-months, .month-rides,
+    .group-card, .group-card > div, .selected-date-toolbar {
+      min-width: 0;
+    }
+    .rides-list, .year-months, .month-rides { grid-template-columns: minmax(0, 1fr); }
+    .year-header, .month-header { min-width: 0; white-space: normal; }
+    .year-header > div:first-child, .month-header > div:first-child {
+      flex: 1 1 auto;
+      min-width: 0;
+    }
+    .year-summary, .month-summary {
+      white-space: normal;
+      overflow-wrap: anywhere;
+      line-height: 1.5;
+    }
+    .year-chevron, .month-chevron { flex: 0 0 auto; }
+    .ride-card { min-width: 0; grid-template-columns: 1.3fr repeat(5, minmax(0, 1fr)); }
+    .ride-card > div { min-width: 0; overflow-wrap: anywhere; }
+    .stat { min-width: 0; }
+    .stat-value { overflow-wrap: anywhere; }
+    .group-meta, .group-title, .ride-small, .selected-date-toolbar { overflow-wrap: anywhere; }
+    @media (max-width: 900px) {
+      .ride-card { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+    @media (max-width: 520px) {
+      .ride-card { grid-template-columns: minmax(0, 1fr); }
+      .year-header { padding: 16px 14px; gap: 10px; }
+      .month-header { padding: 14px 12px; gap: 10px; }
+      .year-months, .month-rides { padding: 8px; }
+      .selected-date-toolbar { flex-wrap: wrap; }
+      .selected-date-toolbar button { max-width: 100%; white-space: normal; }
+      .group-actions { width: 100%; min-width: 0; }
+      .group-actions button { white-space: normal; overflow-wrap: anywhere; }
+    }
+
+    /* Invite confirmation dialog */
+    .invite-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 1000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      background: rgba(0, 0, 0, 0.6);
+    }
+    .invite-dialog {
+      width: 100%;
+      max-width: 480px;
+      min-width: 0;
+      padding: 26px;
+      border: 1px solid var(--border);
+      border-radius: 22px;
+      background: var(--card);
+      color: var(--text);
+      box-shadow: 0 22px 70px rgba(0, 0, 0, 0.25);
+    }
+    .invite-dialog h2 { margin: 0 0 8px; font-size: 21px; }
+    .invite-dialog p { margin: 0 0 18px; color: var(--muted); line-height: 1.5; font-size: 14px; }
+    .invite-dialog input { min-width: 0; font-size: 13px; }
+    .invite-dialog-actions { display: flex; flex-wrap: wrap; gap: 9px; margin-top: 16px; }
+    .invite-dialog-actions button { flex: 1 1 auto; }
+    .invite-dialog-status { min-height: 20px; margin-top: 12px; color: var(--green-light); font-size: 13px; overflow-wrap: anywhere; }
+    .invite-dialog-status.error { color: var(--danger); }
+    @media (max-width: 520px) {
+      .invite-dialog { padding: 20px; }
+      .invite-dialog-actions button { width: 100%; }
+    }
   </style>
 </head>
 
@@ -1205,6 +1277,21 @@
     </section>
   </main>
 
+  <div id="inviteOverlay" class="invite-overlay hidden" role="presentation" onclick="if (event.target === this) closeInviteDialog()">
+    <div class="invite-dialog" role="dialog" aria-modal="true" aria-labelledby="inviteDialogTitle" aria-describedby="inviteDialogDescription">
+      <h2 id="inviteDialogTitle">Invite link created</h2>
+      <p id="inviteDialogDescription">Share this link to invite someone to your Bike Ride Green group.</p>
+      <label for="inviteLinkInput">Invitation link</label>
+      <input id="inviteLinkInput" type="text" readonly aria-label="Invitation link" onclick="this.select()" />
+      <div class="invite-dialog-actions">
+        <button class="btn-primary" onclick="copyInviteLink()">Copy Link</button>
+        <button class="btn-ghost" onclick="shareInviteLink()">Share Invite</button>
+        <button class="btn-ghost" onclick="closeInviteDialog()">Close</button>
+      </div>
+      <div id="inviteDialogStatus" class="invite-dialog-status" role="status" aria-live="polite"></div>
+    </div>
+  </div>
+
   <script>
     const SUPABASE_URL = "https://wstnsrizuhzezectivwf.supabase.co";
     const SUPABASE_KEY = "sb_publishable_GE5PhqdYjJ3RCcXgkJxjeA_Ry9Oh-Oz";
@@ -1309,6 +1396,7 @@
     }
 
     async function signOut() {
+      closeInviteDialog();
       await client.auth.signOut();
 
       currentUser = null;
@@ -1539,12 +1627,97 @@ function toggleChallengeDateFields() {
       return code;
     }
 
+    let previousInviteFocus = null;
+
+    function showInviteDialog(link = "", errorMessage = "") {
+      previousInviteFocus = document.activeElement;
+      const overlay = document.getElementById("inviteOverlay");
+      const input = document.getElementById("inviteLinkInput");
+      const status = document.getElementById("inviteDialogStatus");
+      const title = document.getElementById("inviteDialogTitle");
+      input.value = link;
+      input.classList.toggle("hidden", !link);
+      document.querySelector('label[for="inviteLinkInput"]').classList.toggle("hidden", !link);
+      title.textContent = errorMessage ? "Could not create invite" : "Invite link created";
+      status.textContent = errorMessage;
+      status.classList.toggle("error", Boolean(errorMessage));
+      overlay.querySelectorAll(".invite-dialog-actions button").forEach((button, index) => {
+        button.classList.toggle("hidden", Boolean(errorMessage) && index < 2);
+      });
+      overlay.classList.remove("hidden");
+      document.body.style.overflow = "hidden";
+      (errorMessage ? overlay.querySelector('.invite-dialog-actions button:last-child') : input).focus();
+    }
+
+    function closeInviteDialog() {
+      document.getElementById("inviteOverlay").classList.add("hidden");
+      document.body.style.overflow = "";
+      if (previousInviteFocus && previousInviteFocus.isConnected) previousInviteFocus.focus();
+      previousInviteFocus = null;
+    }
+
+    async function copyInviteLink() {
+      const input = document.getElementById("inviteLinkInput");
+      const status = document.getElementById("inviteDialogStatus");
+      try {
+        if (navigator.clipboard?.writeText) {
+          await navigator.clipboard.writeText(input.value);
+        } else {
+          input.focus();
+          input.select();
+          if (!document.execCommand("copy")) throw new Error("Copy not supported");
+        }
+        status.classList.remove("error");
+        status.textContent = "Invite link copied.";
+      } catch {
+        input.focus();
+        input.select();
+        status.classList.add("error");
+        status.textContent = "Select and copy the link above.";
+      }
+    }
+
+    async function shareInviteLink() {
+      const link = document.getElementById("inviteLinkInput").value;
+      const status = document.getElementById("inviteDialogStatus");
+      if (!link) return;
+      if (navigator.share) {
+        try {
+          await navigator.share({ title: "Bike Ride Green invitation", text: "Join my Bike Ride Green group", url: link });
+          status.classList.remove("error");
+          status.textContent = "Invite shared.";
+        } catch (error) {
+          if (error.name !== "AbortError") {
+            status.classList.add("error");
+            status.textContent = "Sharing unavailable. Use Copy Link instead.";
+          }
+        }
+      } else {
+        await copyInviteLink();
+      }
+    }
+
+    document.addEventListener("keydown", event => {
+      const overlay = document.getElementById("inviteOverlay");
+      if (overlay.classList.contains("hidden")) return;
+      if (event.key === "Escape") {
+        closeInviteDialog();
+      } else if (event.key === "Tab") {
+        const focusable = Array.from(overlay.querySelectorAll("button:not(.hidden), input:not(.hidden)"));
+        const first = focusable[0];
+        const last = focusable[focusable.length - 1];
+        if (event.shiftKey && document.activeElement === first) {
+          event.preventDefault(); last.focus();
+        } else if (!event.shiftKey && document.activeElement === last) {
+          event.preventDefault(); first.focus();
+        }
+      }
+    });
+
     async function createGroupInvite(groupId) {
       if (!currentUser) return;
-
       const inviteCode = generateInviteCode();
-
-      const { data, error } = await client
+      const { error } = await client
         .from("ride_group_invites")
         .insert({
           group_id: groupId,
@@ -1554,20 +1727,12 @@ function toggleChallengeDateFields() {
         })
         .select("*")
         .single();
-
       if (error) {
-        alert(error.message);
+        showInviteDialog("", error.message);
         return;
       }
-
       const inviteLink = `https://bikeridegreen.ca/join.html?code=${encodeURIComponent(inviteCode)}`;
-
-      try {
-        await navigator.clipboard.writeText(inviteLink);
-        alert(`Invite link copied:\n${inviteLink}`);
-      } catch {
-        alert(`Invite link created:\n${inviteLink}`);
-      }
+      showInviteDialog(inviteLink);
     }
 
     async function loadGroups() {
@@ -2492,6 +2657,7 @@ function formatChartMonth(value) {
     }
 
     function showLogin() {
+      closeInviteDialog();
       loginSection.classList.remove("hidden");
       dashboardSection.classList.add("hidden");
       signedInActions.classList.add("hidden");
